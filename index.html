@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國中數學互動遊戲與動態解題大廳 ⚡ Math Games & Visual Lab</title>
+  <title>國中數學互動遊戲與動態解題大廳 ⚡ Math Games, Visual Lab & Video</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -241,6 +241,33 @@
       background: linear-gradient(135deg, #db2777, #be185d, #831843);
     }
 
+    /* 影音微課堂卡片漸層 */
+    .card-vid-ep1 .banner-overlay {
+      background: linear-gradient(135deg, #0284c7, #0369a1, #075985);
+    }
+    .card-vid-ep2 .banner-overlay {
+      background: linear-gradient(135deg, #b45309, #92400e, #78350f);
+    }
+    .card-vid-ep3 .banner-overlay {
+      background: linear-gradient(135deg, #047857, #065f46, #064e3b);
+    }
+    .card-vid-ep4 .banner-overlay {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9, #5b21b6);
+    }
+    .card-vid-master .banner-overlay {
+      background: linear-gradient(135deg, #e11d48, #be123c, #9f1239);
+    }
+    .card-vid-prime .banner-overlay {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8, #1e40af);
+    }
+    .card-vid-sieve .banner-overlay {
+      background: linear-gradient(135deg, #0d9488, #0f766e, #115e59);
+    }
+    .card-vid-factor .banner-overlay {
+      background: linear-gradient(135deg, #c026d3, #a21caf, #86198f);
+    }
+
+
     .banner-icon {
       position: absolute;
       top: 14px;
@@ -454,7 +481,7 @@
     </div>
     <h1>MATH GAMES &amp; VISUAL LAB</h1>
     <p class="subtitle">
-      收錄精選國中數學第一人稱 3D 闖關、心算射擊對戰與動態解題視覺化實驗室。免安裝、無後端依賴，支援電腦、平板即開即玩！
+      收錄精選國中數學第一人稱 3D 闖關、心算射擊對戰、動態解題視覺化實驗室與卡西法秒殺微課堂影音館。免安裝、無後端依賴，支援電腦、平板即開即玩！
     </p>
   </header>
 
@@ -678,6 +705,243 @@
 
   </main>
 
+  
+  <!-- 第三分區：卡西法秒殺微課堂 ＆ 動畫實驗室 -->
+  <div class="section-header">
+    <div class="section-title">
+      <span>🎬</span> 卡西法秒殺微課堂 ＆ 動態幾何影音館
+    </div>
+    <div class="section-line"></div>
+  </div>
+
+  <main class="game-grid">
+
+    <!-- 影片 1：EP01 點與圓 -->
+    <article class="game-card card-vid-ep1">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">🎯</span>
+        <span class="version-tag">九上幾何 26s</span>
+        <h2 class="game-title">點與圓的位置 ＆ 最值送分題</h2>
+      </div>
+      <div class="card-body">
+        <div class="tags">
+          <span class="tag">點與圓的位置</span>
+          <span class="tag">班導暴風圈</span>
+          <span class="tag">最長與最短距離</span>
+        </div>
+        <p class="game-desc">
+          班導視線暴風圈！直觀掌握圓內、圓上、圓外判定，搭配經典會考題，穿心連線加減半徑一秒求出最近與最遠距離。
+        </p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="launchVideo('videos/ep01-point-and-circle.mp4', '【EP01】點與圓的位置 ＆ 最值送分題', '🎯')">
+            <span>▶</span> 立即觀看
+          </button>
+          <a class="btn btn-secondary" href="videos/ep01-point-and-circle.mp4" target="_blank" title="在新分頁播放">
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 影片 2：EP02 直線與圓 -->
+    <article class="game-card card-vid-ep2">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">🍢</span>
+        <span class="version-tag">九上幾何 25s</span>
+        <h2 class="game-title">直線與圓 3 種關係 ＆ 坐標交點秒殺</h2>
+      </div>
+      <div class="card-body">
+        <div class="tags">
+          <span class="tag">割線與切線</span>
+          <span class="tag">烤肉串vs擦邊球</span>
+          <span class="tag">坐標交點秒殺</span>
+        </div>
+        <p class="game-desc">
+          竹籤插穿貢丸（割線2點）vs 完美擦邊球（切線1點）！搭配原點圓心常數題，利用絕對值心算 3 秒判別交點數。
+        </p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="launchVideo('videos/ep02-line-and-circle.mp4', '【EP02】直線與圓 3 種關係 ＆ 坐標交點秒殺', '🍢')">
+            <span>▶</span> 立即觀看
+          </button>
+          <a class="btn btn-secondary" href="videos/ep02-line-and-circle.mp4" target="_blank" title="在新分頁播放">
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 影片 3：EP03 弦心距 -->
+    <article class="game-card card-vid-ep3">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">🏹</span>
+        <span class="version-tag">九上幾何 23s</span>
+        <h2 class="game-title">弦心距垂徑定理 ＆ 必考水管水深題</h2>
+      </div>
+      <div class="card-body">
+        <div class="tags">
+          <span class="tag">垂徑定理</span>
+          <span class="tag">畢氏黃金三角形</span>
+          <span class="tag">水管水深陷阱</span>
+        </div>
+        <p class="game-desc">
+          圓心作垂線必垂直平分弦！召喚黃金金三角 r² = d² + (半弦)²，特別提醒考場最大陷阱：水深要用半徑減弦心距！
+        </p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="launchVideo('videos/ep03-chord-and-distance.mp4', '【EP03】弦心距垂徑定理 ＆ 必考水管水深題', '🏹')">
+            <span>▶</span> 立即觀看
+          </button>
+          <a class="btn btn-secondary" href="videos/ep03-chord-and-distance.mp4" target="_blank" title="在新分頁播放">
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 影片 4：EP04 雙切線鳶形 -->
+    <article class="game-card card-vid-ep4">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">🕹️</span>
+        <span class="version-tag">九上幾何 25s</span>
+        <h2 class="game-title">雙切線鳶形 ＆ 會考壓軸三連擊</h2>
+      </div>
+      <div class="card-body">
+        <div class="tags">
+          <span class="tag">夾娃娃機雙爪</span>
+          <span class="tag">全等鳶形</span>
+          <span class="tag">面積秒算弦長</span>
+        </div>
+        <p class="game-desc">
+          圓外雙切線就是夾娃娃機雙爪，天生左右全等對稱！免解二元二次，用「對角線乘積的一半」3 秒秒殺歷屆最怕的弦長題。
+        </p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="launchVideo('videos/ep04-tangent-kite.mp4', '【EP04】雙切線鳶形 ＆ 會考壓軸三連擊', '🕹️')">
+            <span>▶</span> 立即觀看
+          </button>
+          <a class="btn btn-secondary" href="videos/ep04-tangent-kite.mp4" target="_blank" title="在新分頁播放">
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 影片 5：Circle Fun Master 完整總整理 -->
+    <article class="game-card card-vid-master">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">🏆</span>
+        <span class="version-tag">會考特輯 45s</span>
+        <h2 class="game-title">圓的幾何大魔王破關總整理</h2>
+      </div>
+      <div class="card-body">
+        <div class="tags">
+          <span class="tag">光刀切西瓜</span>
+          <span class="tag">拉弓射箭</span>
+          <span class="tag">三大直覺印章</span>
+        </div>
+        <p class="game-desc">
+          國三幾何會考必勝指南！融合三大生活隱喻與考前印章口訣，考前 45 秒快速打通 2-1 全章節直覺觀念。
+        </p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="launchVideo('videos/circle-fun-master.mp4', '圓的幾何大魔王破關總整理', '🏆')">
+            <span>▶</span> 立即觀看
+          </button>
+          <a class="btn btn-secondary" href="videos/circle-fun-master.mp4" target="_blank" title="在新分頁播放">
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 影片 6：七上 質數與合數概念 -->
+    <article class="game-card card-vid-prime">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">🧱</span>
+        <span class="version-tag">七上數與式 28s</span>
+        <h2 class="game-title">質數與合數直觀幾何概念</h2>
+      </div>
+      <div class="card-body">
+        <div class="tags">
+          <span class="tag">質數與合數</span>
+          <span class="tag">矩形排列法</span>
+          <span class="tag">因數視覺化</span>
+        </div>
+        <p class="game-desc">
+          擺積木看因數！12 顆積木能排出多種長方形（合數），7 顆積木只能排成一條線（質數），用幾何排列打破死記定義。
+        </p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="launchVideo('videos/prime-and-composite.mp4', '七上：質數與合數直觀概念', '🧱')">
+            <span>▶</span> 立即觀看
+          </button>
+          <a class="btn btn-secondary" href="videos/prime-and-composite.mp4" target="_blank" title="在新分頁播放">
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 影片 7：七上 埃拉托斯特尼篩法 -->
+    <article class="game-card card-vid-sieve">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">🔍</span>
+        <span class="version-tag">七上數與式 33s</span>
+        <h2 class="game-title">埃拉托斯特尼 1~100 質數篩法</h2>
+      </div>
+      <div class="card-body">
+        <div class="tags">
+          <span class="tag">埃氏篩法</span>
+          <span class="tag">動態刪去法</span>
+          <span class="tag">1~100 質數精確掌握</span>
+        </div>
+        <p class="game-desc">
+          百數表高速掃描！先殺 1，再劃掉 2、3、5、7 的倍數，剩下的 25 個質數閃閃發亮，動態呈現經典數學篩法。
+        </p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="launchVideo('videos/sieve-1-to-100.mp4', '七上：埃拉托斯特尼 1~100 質數篩法', '🔍')">
+            <span>▶</span> 立即觀看
+          </button>
+          <a class="btn btn-secondary" href="videos/sieve-1-to-100.mp4" target="_blank" title="在新分頁播放">
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 影片 8：七上 標準分解式與短除法 -->
+    <article class="game-card card-vid-factor">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">🌲</span>
+        <span class="version-tag">七上數與式 32s</span>
+        <h2 class="game-title">標準分解式 ＆ 標準直式短除法</h2>
+      </div>
+      <div class="card-body">
+        <div class="tags">
+          <span class="tag">標準分解式</span>
+          <span class="tag">課本直式短除法</span>
+          <span class="tag">底數與指數</span>
+        </div>
+        <p class="game-desc">
+          嚴格依照台灣教科書標準短除法格式對齊！質數由小到大連續分解，直觀呈現底數與指數的乘方結構。
+        </p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="launchVideo('videos/standard-prime-factorization.mp4', '七上：標準分解式 ＆ 標準直式短除法', '🌲')">
+            <span>▶</span> 立即觀看
+          </button>
+          <a class="btn btn-secondary" href="videos/standard-prime-factorization.mp4" target="_blank" title="在新分頁播放">
+            <span>↗</span>
+          </a>
+        </div>
+      </div>
+    </article>
+
+  </main>
+
   <!-- 內嵌執行視窗 -->
   <div id="game-modal">
     <div class="modal-header">
@@ -695,6 +959,9 @@
       </div>
     </div>
     <iframe id="game-frame" class="modal-frame" src="about:blank"></iframe>
+    <div id="video-container" class="modal-frame" style="display:none; align-items:center; justify-content:center; background:#000;">
+      <video id="video-player" controls playsinline style="max-width:100%; max-height:100%; width:auto; height:auto; box-shadow: 0 0 40px rgba(0,0,0,0.8); outline:none;"></video>
+    </div>
   </div>
 
   <footer>
@@ -702,15 +969,50 @@
   </footer>
 
   <script>
-    function launchInApp(url, title) {
+    function launchInApp(url, title, icon = '🎮') {
       const modal = document.getElementById('game-modal');
       const frame = document.getElementById('game-frame');
+      const vContainer = document.getElementById('video-container');
+      const player = document.getElementById('video-player');
       const titleEl = document.getElementById('modal-app-title');
+      const iconEl = document.getElementById('modal-app-icon');
       const newtabBtn = document.getElementById('modal-open-newtab');
 
       titleEl.textContent = title;
+      iconEl.textContent = icon;
       newtabBtn.href = url;
+
+      if (player) {
+        player.pause();
+        player.src = '';
+      }
+      if (vContainer) vContainer.style.display = 'none';
+      frame.style.display = 'block';
       frame.src = url;
+
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function launchVideo(url, title, icon = '🎬') {
+      const modal = document.getElementById('game-modal');
+      const frame = document.getElementById('game-frame');
+      const vContainer = document.getElementById('video-container');
+      const player = document.getElementById('video-player');
+      const titleEl = document.getElementById('modal-app-title');
+      const iconEl = document.getElementById('modal-app-icon');
+      const newtabBtn = document.getElementById('modal-open-newtab');
+
+      titleEl.textContent = title;
+      iconEl.textContent = icon;
+      newtabBtn.href = url;
+
+      frame.style.display = 'none';
+      frame.src = 'about:blank';
+      vContainer.style.display = 'flex';
+      player.src = url;
+      player.play().catch(e => console.log('Autoplay handled', e));
+
       modal.classList.add('active');
       document.body.style.overflow = 'hidden';
     }
@@ -718,9 +1020,18 @@
     function closeModal() {
       const modal = document.getElementById('game-modal');
       const frame = document.getElementById('game-frame');
+      const vContainer = document.getElementById('video-container');
+      const player = document.getElementById('video-player');
+
+      if (player) {
+        player.pause();
+        player.src = '';
+      }
+      if (vContainer) vContainer.style.display = 'none';
+      frame.src = 'about:blank';
+      frame.style.display = 'block';
 
       modal.classList.remove('active');
-      frame.src = 'about:blank';
       document.body.style.overflow = '';
     }
 
