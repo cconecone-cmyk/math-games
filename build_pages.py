@@ -1,0 +1,1645 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Build script for math-games multi-tab lobby.
+Generates:
+  - index.html (SPA tab router + hash support)
+  - games.html (standalone games tab)
+  - lab.html (standalone dynamic solving lab tab)
+  - theater.html (standalone cinema theater tab)
+  - tools.html (standalone teacher toolbox tab)
+"""
+
+import json
+import os
+
+GAMES = [
+    {
+        "id": "geo-fps-3d",
+        "title": "幾何小夥伴 3D 闖關",
+        "subtitle": "CS 第一人稱持槍版",
+        "version": "3D FPS v2.3.5",
+        "icon": "🔫",
+        "grade": "9",
+        "banner_class": "card-3d",
+        "tags": ["Three.js 3D", "CS 第一人稱持槍", "WASD 走位射擊"],
+        "desc": "經典 CS 玩法的 3D 第一人稱射擊！支援鍵盤 WASD 走位、滑鼠鎖定視角、槍枝後座力動畫與即時射線判定，身臨其境穿梭 3D 幾何戰場！",
+        "url": "geometry-fps-3d.html",
+        "primary_text": "🎮 開始遊玩 (新分頁)",
+        "can_preview": True,
+    },
+    {
+        "id": "math-fps",
+        "title": "數學射擊對戰 MATH FPS",
+        "subtitle": "2D 雙軌心算版",
+        "version": "2D FPS v0.2.3",
+        "icon": "🎯",
+        "grade": "7",
+        "banner_class": "card-fps",
+        "tags": ["雙軌極速心算", "手速反射神經", "雙人守護技能"],
+        "desc": "瞄準題目靶心，以最快速度扣下運算扳機！將枯燥的心算化為刺激的快節奏射擊對決，考驗極限運算手速。",
+        "url": "math-fps.html",
+        "primary_text": "🎮 開始遊玩 (新分頁)",
+        "can_preview": True,
+    },
+    {
+        "id": "geo-quest",
+        "title": "幾何勇者傳說冒險",
+        "subtitle": "QUEST v5.0",
+        "version": "QUEST v5.0",
+        "icon": "🔷",
+        "grade": "7,8",
+        "banner_class": "card-geo",
+        "tags": ["七上／七下／八上", "全單元冒險地圖", "BOSS 挑戰與成就"],
+        "desc": "完整收錄國中課程！探索幾何地圖、解答章節任務、擊敗 BOSS 並解鎖成就系統，讓幾何概念變得生動有趣。",
+        "url": "geometry-quest.html",
+        "primary_text": "🎮 開始遊玩 (新分頁)",
+        "can_preview": True,
+    },
+    {
+        "id": "prime-sea",
+        "title": "質數海戰 Prime Battle",
+        "subtitle": "大螢幕海戰拆彈",
+        "version": "BATTLE v1.0",
+        "icon": "🚢",
+        "grade": "7",
+        "banner_class": "card-sea",
+        "tags": ["因數與倍數", "質數拆彈密碼", "大螢幕對戰"],
+        "desc": "將質數判別與質因數分解化為海戰拆彈防禦戰！鎖定目標艦隊與炸彈密碼，精準辨識質數弱點一擊必殺！",
+        "url": "prime-sea-battle.html",
+        "primary_text": "🎮 開始遊玩 (新分頁)",
+        "can_preview": True,
+    },
+    {
+        "id": "factor-battle",
+        "title": "因倍數之戰 卡牌對決",
+        "subtitle": "桌遊與學習單主題包",
+        "version": "主題包教材",
+        "icon": "⚔️",
+        "grade": "7",
+        "banner_class": "card-factor-battle",
+        "tags": ["七上因倍數", "卡牌策略", "桌遊教材手冊"],
+        "desc": "融合最大公因數、最小公倍數與質因數分解的卡牌桌遊大作！提供完整教師教學手冊、卡牌規則與課堂活動學習單。",
+        "url": "docs/國中數學-因倍數之戰主題包-書冊.pdf",
+        "primary_text": "📖 開啟主題包手冊 (PDF)",
+        "can_preview": False,
+    },
+]
+
+LAB_ITEMS = [
+    {
+        "id": "short-division",
+        "title": "《短除法動態教室 v2.7》",
+        "subtitle": "幾何方格拼圖與短除法",
+        "version": "SHORT-DIV v2.7",
+        "icon": "➗",
+        "grade": "7",
+        "banner_class": "card-short-div",
+        "tags": ["七上因倍數", "最大公因數與最小公倍數", "動態方格重組", "左右對照比較"],
+        "desc": "國中數學最新視覺化教具！支援整數與標準分解式短除法運算、動態方格面積拼圖重組、長度倍數延伸與左右兩法對照，深刻理解公因數與公倍數幾何本質。",
+        "url": "https://cconecone-cmyk.github.io/short-division/",
+        "primary_text": "🔗 進入短除法教室 (新分頁)",
+        "can_preview": True,
+    },
+    {
+        "id": "divisibility-rules",
+        "title": "《倍數判別法動態教室》",
+        "subtitle": "全系列倍數原理動態演示",
+        "version": "RULES v1.2",
+        "icon": "🔍",
+        "grade": "7",
+        "banner_class": "card-rules",
+        "tags": ["七上數與式", "2、3、4、7、8、9、11", "幾何原理", "動態演示"],
+        "desc": "全系列倍數判別法動態視覺化！包含 2、4、8、3、9、11 及 7（三位分節法）的直觀幾何原理、位值切分與生動動畫演示，告別死記硬背。",
+        "url": "https://cconecone-cmyk.github.io/divisibility-rules/",
+        "primary_text": "🔗 進入倍數判別教室 (新分頁)",
+        "can_preview": True,
+    },
+    {
+        "id": "track-speed",
+        "title": "速率：同向與逆向跑操場",
+        "subtitle": "一元一次方程式應用題",
+        "version": "七上代數",
+        "icon": "🏃",
+        "grade": "7",
+        "banner_class": "card-speed",
+        "tags": ["一元一次方程式", "同向追趕（差一圈）", "逆向相遇（合一圈）"],
+        "desc": "告別死背公式！動態演示環形跑道上兩人同向追趕與逆向相遇的即時軌跡，滑桿自由調整速度與圈長，直觀掌握相對運動。",
+        "url": "running-track-speed.html",
+        "primary_text": "👁️ 啟動動態解題 (新分頁)",
+        "can_preview": True,
+    },
+    {
+        "id": "rope-ratio",
+        "title": "連比：斷開繩子動態解析",
+        "subtitle": "段考高頻魔王題",
+        "version": "八下比例",
+        "icon": "🪢",
+        "grade": "8",
+        "banner_class": "card-ratio",
+        "tags": ["段考高頻魔王題", "繩長動態切割", "連比代入推導"],
+        "desc": "段考經典常考題！將長度比例切割、重新綁定與分段以動態視覺化拖曳圖表呈現，一眼看穿比與實際長度的換算邏輯。",
+        "url": "rope-ratio-split.html",
+        "primary_text": "👁️ 啟動動態解題 (新分頁)",
+        "can_preview": True,
+    },
+    {
+        "id": "para-sim",
+        "title": "平行四邊形經典相似推導",
+        "subtitle": "三角形相似與比例線段",
+        "version": "九上幾何",
+        "icon": "📐",
+        "grade": "9",
+        "banner_class": "card-para",
+        "tags": ["三角形相似形", "沙漏型／母子型", "對應邊比例動態著色"],
+        "desc": "平行四邊形內部截線形成的相似三角形群！即時動態著色標記對應邊與對應角，步驟式推導邊長幾何比例關係。",
+        "url": "parallelogram-similarity.html",
+        "primary_text": "👁️ 啟動動態解題 (新分頁)",
+        "can_preview": True,
+    },
+]
+
+VIDEOS = [
+    {
+        "id": "ep01",
+        "series": "九上幾何・圓的幾何系列",
+        "title": "【EP01】點與圓的位置 ＆ 最值送分題",
+        "duration": "26s",
+        "icon": "🎯",
+        "thumb": "videos/thumb-ep01.png",
+        "file": "videos/ep01-point-and-circle.mp4",
+        "tags": ["點與圓的位置", "班導暴風圈", "最長與最短距離"],
+        "desc": "班導視線暴風圈！直觀掌握圓內、圓上、圓外判定，搭配經典會考題，穿心連線加減半徑一秒求出最近與最遠距離。",
+    },
+    {
+        "id": "ep02",
+        "series": "九上幾何・圓的幾何系列",
+        "title": "【EP02】直線與圓 3 種關係 ＆ 坐標交點秒殺",
+        "duration": "25s",
+        "icon": "🍢",
+        "thumb": "videos/thumb-ep02.png",
+        "file": "videos/ep02-line-and-circle.mp4",
+        "tags": ["割線與切線", "烤肉串vs擦邊球", "坐標交點秒殺"],
+        "desc": "竹籤插穿貢丸（割線2點）vs 完美擦邊球（切線1點）！搭配原點圓心常數題，利用絕對值心算 3 秒判別交點數。",
+    },
+    {
+        "id": "ep03",
+        "series": "九上幾何・圓的幾何系列",
+        "title": "【EP03】弦心距垂徑定理 ＆ 必考水管水深題",
+        "duration": "23s",
+        "icon": "🏹",
+        "thumb": "videos/thumb-ep03.png",
+        "file": "videos/ep03-chord-and-distance.mp4",
+        "tags": ["垂徑定理", "畢氏黃金三角形", "水管水深陷阱"],
+        "desc": "圓心作垂線必垂直平分弦！召喚黃金金三角 r² = d² + (半弦)²，特別提醒考場最大陷阱：水深要用半徑減弦心距！",
+    },
+    {
+        "id": "ep04",
+        "series": "九上幾何・圓的幾何系列",
+        "title": "【EP04】雙切線鳶形 ＆ 會考壓軸三連擊",
+        "duration": "25s",
+        "icon": "🕹️",
+        "thumb": "videos/thumb-ep04.png",
+        "file": "videos/ep04-tangent-kite.mp4",
+        "tags": ["夾娃娃機雙爪", "全等鳶形", "面積秒算弦長"],
+        "desc": "圓外雙切線就是夾娃娃機雙爪，天生左右全等對稱！免解二元二次，用「對角線乘積的一半」3 秒秒殺歷屆最怕的弦長題。",
+    },
+    {
+        "id": "master",
+        "series": "九上幾何・圓的幾何系列",
+        "title": "【特別篇】圓的幾何大魔王破關總整理",
+        "duration": "45s",
+        "icon": "🏆",
+        "thumb": "videos/thumb-circle-master.png",
+        "file": "videos/circle-fun-master.mp4",
+        "tags": ["光刀切西瓜", "拉弓射箭", "三大直覺印章"],
+        "desc": "國三幾何會考必勝指南！融合三大生活隱喻與考前印章口訣，考前 45 秒快速打通 2-1 全章節直覺觀念。",
+    },
+    {
+        "id": "prime",
+        "series": "七上數與式・因倍數系列",
+        "title": "【七上】質數與合數直觀幾何概念",
+        "duration": "28s",
+        "icon": "🧱",
+        "thumb": "videos/thumb-prime.png",
+        "file": "videos/prime-and-composite.mp4",
+        "tags": ["質數與合數", "矩形排列法", "因數視覺化"],
+        "desc": "擺積木看因數！12 顆積木能排出多種長方形（合數），7 顆積木只能排成一條線（質數），用幾何排列打破死記定義。",
+    },
+    {
+        "id": "sieve",
+        "series": "七上數與式・因倍數系列",
+        "title": "【七上】埃拉托斯特尼 1~100 質數篩法",
+        "duration": "33s",
+        "icon": "🔍",
+        "thumb": "videos/thumb-sieve.png",
+        "file": "videos/sieve-1-to-100.mp4",
+        "tags": ["埃氏篩法", "動態刪去法", "1~100 質數精確掌握"],
+        "desc": "百數表高速掃描！先殺 1，再劃掉 2、3、5、7 的倍數，剩下的 25 個質數閃閃發亮，動態呈現經典數學篩法。",
+    },
+    {
+        "id": "factor",
+        "series": "七上數與式・因倍數系列",
+        "title": "【七上】標準分解式 ＆ 標準直式短除法",
+        "duration": "32s",
+        "icon": "🌲",
+        "thumb": "videos/thumb-factor.png",
+        "file": "videos/standard-prime-factorization.mp4",
+        "tags": ["標準分解式", "課本直式短除法", "底數與指數"],
+        "desc": "嚴格依照台灣教科書標準短除法格式對齊！質數由小到大連續分解，直觀呈現底數與指數的乘方結構。",
+    },
+]
+
+TOOLS = [
+    {
+        "id": "mathgeocraft",
+        "title": "MathGeoCraft 幾何圖秒級復刻",
+        "subtitle": "專為數學老師打造的開源幾何工具",
+        "version": "開源神器",
+        "icon": "📐",
+        "banner_class": "card-tool-geo",
+        "tags": ["高解析向量繪圖", "Word試卷.docx", "課本習作復刻", "免安裝"],
+        "desc": "專為數學老師打造的零設定開源幾何工具：貼上截圖當底圖，秒級復刻課本習作高解析圖檔 (PNG) 與 Word 試卷檔 (.docx)。",
+        "url": "https://cconecone-cmyk.github.io/MathGeoCraft/",
+        "primary_text": "🔗 前往 MathGeoCraft (新分頁)",
+    },
+    {
+        "id": "edupdf-tools",
+        "title": "EduPDF Tools 教師備課 PDF 工具箱",
+        "subtitle": "教師備課與大螢幕投影專用",
+        "version": "純前端本地運算",
+        "icon": "📑",
+        "banner_class": "card-tool-pdf",
+        "tags": ["純前端本地運算", "講義合訂", "單元拆分", "大螢幕投影"],
+        "desc": "教師備課與大螢幕投影專用 PDF 工具箱！純前端本地運算無伺服器、智慧壓縮、單元拆分、合訂講義，快速處理考卷與教學文件。",
+        "url": "https://cconecone-cmyk.github.io/edupdf-tools/",
+        "primary_text": "🔗 前往 EduPDF Tools (新分頁)",
+    },
+    {
+        "id": "copybook",
+        "title": "線上灰底字描寫本生成器",
+        "subtitle": "A4 滿版硬筆字帖生成與列印工具",
+        "version": "字帖生成器",
+        "icon": "✍️",
+        "banner_class": "card-tool-copybook",
+        "tags": ["A4滿版列印", "硬筆書法", "繁體正楷", "字帖生成"],
+        "desc": "線上灰底字描寫本生成器！支援 A4 滿版硬筆字帖生成與列印，自訂教學文字、格線樣式與灰度，班級輔導與練字神器。",
+        "url": "https://cconecone-cmyk.github.io/copybook-generator/",
+        "primary_text": "🔗 前往字帖生成器 (新分頁)",
+    },
+    {
+        "id": "form-replicator",
+        "title": "Form Replicator 表單 1:1 復刻神器",
+        "subtitle": "紙本與照片表單 1:1 復刻重製",
+        "version": "表單數位化",
+        "icon": "📋",
+        "banner_class": "card-tool-form",
+        "tags": ["智慧去手寫/印章", "1:1精準復刻", "Word匯出", "向量PDF"],
+        "desc": "紙本與照片表單 1:1 復刻重製神器！支援智慧去手寫與印章、A4 雙面排版、Word 與向量 PDF 一鍵匯出，行政與教學表格數位化好幫手。",
+        "url": "https://cconecone-cmyk.github.io/form-replicator/",
+        "primary_text": "🔗 前往 Form Replicator (新分頁)",
+    },
+]
+
+def render_game_card(game):
+    tags_html = "".join(f'<span class="tag">{t}</span>' for t in game["tags"])
+    preview_btn = f'''<button class="btn btn-secondary" onclick="launchInApp('{game["url"]}', '{game["title"]}', '{game["icon"]}')" title="快速預覽"><span>↗</span></button>''' if game.get("can_preview") else ''
+    return f'''
+    <article class="game-card {game['banner_class']}" data-grade="{game['grade']}">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">{game['icon']}</span>
+        <span class="version-tag">{game['version']}</span>
+        <h3 class="game-title">{game['title']}</h3>
+      </div>
+      <div class="card-body">
+        <div class="tags">{tags_html}</div>
+        <p class="game-desc">{game['desc']}</p>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="{game['url']}" target="_blank" rel="noopener noreferrer">
+            {game['primary_text']}
+          </a>
+          {preview_btn}
+        </div>
+      </div>
+    </article>
+'''
+
+def render_lab_card(lab):
+    tags_html = "".join(f'<span class="tag">{t}</span>' for t in lab["tags"])
+    preview_btn = f'''<button class="btn btn-secondary" onclick="launchInApp('{lab["url"]}', '{lab["title"]}', '{lab["icon"]}')" title="快速預覽"><span>↗</span></button>''' if lab.get("can_preview") else ''
+    return f'''
+    <article class="game-card {lab['banner_class']}" data-grade="{lab['grade']}">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">{lab['icon']}</span>
+        <span class="version-tag">{lab['version']}</span>
+        <h3 class="game-title">{lab['title']}</h3>
+      </div>
+      <div class="card-body">
+        <div class="tags">{tags_html}</div>
+        <p class="game-desc">{lab['desc']}</p>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="{lab['url']}" target="_blank" rel="noopener noreferrer">
+            {lab['primary_text']}
+          </a>
+          {preview_btn}
+        </div>
+      </div>
+    </article>
+'''
+
+def render_tool_card(tool):
+    tags_html = "".join(f'<span class="tag">{t}</span>' for t in tool["tags"])
+    return f'''
+    <article class="game-card {tool['banner_class']}">
+      <div class="card-banner">
+        <div class="banner-overlay"></div>
+        <span class="banner-icon">{tool['icon']}</span>
+        <span class="version-tag">{tool['version']}</span>
+        <h3 class="game-title">{tool['title']}</h3>
+      </div>
+      <div class="card-body">
+        <div class="tags">{tags_html}</div>
+        <p class="game-desc">{tool['desc']}</p>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="{tool['url']}" target="_blank" rel="noopener noreferrer">
+            {tool['primary_text']}
+          </a>
+        </div>
+      </div>
+    </article>
+'''
+
+def render_playlist_item(v, index):
+    return f'''
+    <div class="playlist-item {'active' if index == 0 else ''}" data-index="{index}" onclick="selectVideo({index})">
+      <div class="item-thumb-box">
+        <img class="item-thumb" src="{v['thumb']}" alt="{v['title']}" loading="lazy">
+        <span class="item-duration">{v['duration']}</span>
+        <div class="item-play-overlay">▶</div>
+      </div>
+      <div class="item-content">
+        <div class="item-series">{v['series']}</div>
+        <div class="item-title">{v['title']}</div>
+      </div>
+    </div>
+'''
+
+def build_html(default_tab="games"):
+    games_cards = "".join(render_game_card(g) for g in GAMES)
+    lab_cards = "".join(render_lab_card(l) for l in LAB_ITEMS)
+    tools_cards = "".join(render_tool_card(t) for t in TOOLS)
+
+    # Playlist split into 2 groups
+    group1_items = "".join(render_playlist_item(v, i) for i, v in enumerate(VIDEOS[:5]))
+    group2_items = "".join(render_playlist_item(v, i + 5) for i, v in enumerate(VIDEOS[5:]))
+
+    videos_json = json.dumps(VIDEOS, ensure_ascii=False)
+
+    html = f'''<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國中數學互動大廳 ⚡ Math Games, Visual Lab & Video</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {{
+      --bg-dark: #0b1120;
+      --card-bg: rgba(30, 41, 59, 0.72);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.4);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --header-bg: rgba(11, 17, 32, 0.88);
+    }}
+
+    * {{
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }}
+
+    body {{
+      min-height: 100vh;
+      background: radial-gradient(circle at top center, #1e1b4b 0%, #0f172a 50%, #030712 100%);
+      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow-x: hidden;
+      padding-bottom: 70px;
+    }}
+
+    /* 背景流光光暈 */
+    .bg-blobs {{
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }}
+
+    .blob {{
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.22;
+      animation: float 22s infinite alternate ease-in-out;
+    }}
+
+    .blob-1 {{
+      width: 500px;
+      height: 500px;
+      background: #3b82f6;
+      top: -120px;
+      left: -80px;
+    }}
+
+    .blob-2 {{
+      width: 550px;
+      height: 550px;
+      background: #ec4899;
+      bottom: -150px;
+      right: -100px;
+      animation-delay: -8s;
+    }}
+
+    .blob-3 {{
+      width: 400px;
+      height: 400px;
+      background: #10b981;
+      top: 35%;
+      left: 55%;
+      animation-delay: -14s;
+    }}
+
+    @keyframes float {{
+      0% {{ transform: translate(0, 0) scale(1); }}
+      100% {{ transform: translate(70px, 45px) scale(1.15); }}
+    }}
+
+    /* 頂部標頭 */
+    header {{
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 36px 20px 18px;
+      max-width: 1100px;
+    }}
+
+    .badge {{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+    }}
+
+    h1 {{
+      font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+      font-size: clamp(1.8rem, 4.5vw, 2.9rem);
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1.5px;
+    }}
+
+    .subtitle {{
+      font-size: clamp(0.95rem, 1.8vw, 1.12rem);
+      color: var(--text-sub);
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+    }}
+
+    /* 頂部吸頂分頁導覽列 (Sticky Navbar Tabs) */
+    .sticky-nav {{
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      background: var(--header-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      padding: 10px 16px;
+      transition: all 0.3s ease;
+    }}
+
+    .nav-container {{
+      max-width: 1200px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }}
+
+    .nav-tabs {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }}
+
+    .nav-tab {{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }}
+
+    .nav-tab:hover {{
+      background: rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }}
+
+    .nav-tab.active {{
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(3, 105, 161, 0.38));
+      border-color: #38bdf8;
+      color: #38bdf8;
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.28);
+    }}
+
+    .tab-badge {{
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      color: #cbd5e1;
+      font-weight: 800;
+    }}
+
+    .nav-tab.active .tab-badge {{
+      background: #38bdf8;
+      color: #041428;
+      border-color: transparent;
+    }}
+
+    .nav-extra {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+
+    .open-standalone-btn {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }}
+
+    .open-standalone-btn:hover {{
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.3);
+    }}
+
+    /* 分頁容器（點擊分頁時只顯示該分頁，絕不上下混疊） */
+    .tab-view {{
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+      padding: 24px 20px 40px;
+      position: relative;
+      z-index: 10;
+      animation: tabFadeIn 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }}
+
+    .tab-view.active {{
+      display: block;
+    }}
+
+    @keyframes tabFadeIn {{
+      from {{
+        opacity: 0;
+        transform: translateY(10px);
+      }}
+      to {{
+        opacity: 1;
+        transform: translateY(0);
+      }}
+    }}
+
+    /* 區塊標題與說明 */
+    .tab-header {{
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }}
+
+    .tab-title-row {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }}
+
+    .tab-title {{
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }}
+
+    .tab-desc {{
+      font-size: 0.95rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+    }}
+
+    /* 年級篩選膠囊 (Sub-filter pills) */
+    .filter-bar {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+    }}
+
+    .filter-label {{
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #94a3b8;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 4px;
+    }}
+
+    .filter-pill {{
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }}
+
+    .filter-pill:hover {{
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }}
+
+    .filter-pill.active {{
+      background: #38bdf8;
+      color: #041428;
+      font-weight: 800;
+      border-color: transparent;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    }}
+
+    /* 卡片網格 */
+    .cards-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }}
+
+    .game-card {{
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }}
+
+    .game-card:hover {{
+      transform: translateY(-6px);
+      box-shadow: 0 18px 40px -10px rgba(0, 0, 0, 0.6);
+      border-color: rgba(255, 255, 255, 0.28);
+    }}
+
+    .card-banner {{
+      height: 130px;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      padding: 16px;
+      overflow: hidden;
+    }}
+
+    .banner-overlay {{
+      position: absolute;
+      inset: 0;
+      opacity: 0.92;
+      transition: opacity 0.3s;
+    }}
+
+    .game-card:hover .banner-overlay {{
+      opacity: 1;
+    }}
+
+    /* 各卡片頂部漸層主題 */
+    .card-3d .banner-overlay {{ background: linear-gradient(135deg, #d97706, #b45309, #78350f); }}
+    .card-fps .banner-overlay {{ background: linear-gradient(135deg, #dc2626, #991b1b, #450a0a); }}
+    .card-geo .banner-overlay {{ background: linear-gradient(135deg, #2563eb, #1d4ed8, #172554); }}
+    .card-sea .banner-overlay {{ background: linear-gradient(135deg, #0891b2, #0e7490, #164e63); }}
+    .card-factor-battle .banner-overlay {{ background: linear-gradient(135deg, #7c3aed, #5b21b6, #3b0764); }}
+
+    .card-short-div .banner-overlay {{ background: linear-gradient(135deg, #059669, #0d9488, #134e4a); }}
+    .card-rules .banner-overlay {{ background: linear-gradient(135deg, #4f46e5, #3b82f6, #1e3a8a); }}
+    .card-speed .banner-overlay {{ background: linear-gradient(135deg, #059669, #047857, #064e3b); }}
+    .card-ratio .banner-overlay {{ background: linear-gradient(135deg, #7c3aed, #6d28d9, #4c1d95); }}
+    .card-para .banner-overlay {{ background: linear-gradient(135deg, #db2777, #be185d, #831843); }}
+
+    .card-tool-geo .banner-overlay {{ background: linear-gradient(135deg, #0284c7, #2563eb, #1e3a8a); }}
+    .card-tool-pdf .banner-overlay {{ background: linear-gradient(135deg, #059669, #047857, #064e3b); }}
+    .card-tool-copybook .banner-overlay {{ background: linear-gradient(135deg, #d97706, #b45309, #78350f); }}
+    .card-tool-form .banner-overlay {{ background: linear-gradient(135deg, #7c3aed, #6d28d9, #4c1d95); }}
+
+    .banner-icon {{
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      font-size: 2.3rem;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+    }}
+
+    .version-tag {{
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }}
+
+    .game-title {{
+      position: relative;
+      z-index: 2;
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+      line-height: 1.3;
+    }}
+
+    .card-body {{
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 12px;
+    }}
+
+    .tags {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }}
+
+    .tag {{
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      color: #cbd5e1;
+      font-weight: 600;
+    }}
+
+    .game-desc {{
+      font-size: 0.92rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+      flex: 1;
+    }}
+
+    .card-actions {{
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }}
+
+    .btn {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }}
+
+    .btn-primary {{
+      flex: 1;
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+    }}
+
+    .btn-primary:hover {{
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.45);
+      transform: translateY(-1px);
+    }}
+
+    .btn-secondary {{
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      width: 44px;
+    }}
+
+    .btn-secondary:hover {{
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.3);
+    }}
+
+    /* 觀念影廳專用 Cinema UI (劇院級無干擾播放器) */
+    .theater-stage {{
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 30px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+    }}
+
+    @media (max-width: 900px) {{
+      .theater-stage {{
+        grid-template-columns: 1fr;
+      }}
+    }}
+
+    .theater-screen-wrapper {{
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: 14px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      box-shadow: 0 0 35px rgba(56, 189, 248, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }}
+
+    #theater-video {{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }}
+
+    .theater-info-card {{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 4px;
+    }}
+
+    .theater-meta {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }}
+
+    .theater-badge {{
+      background: #38bdf8;
+      color: #041428;
+      font-weight: 800;
+      font-size: 0.78rem;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }}
+
+    .theater-series {{
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      font-weight: 600;
+    }}
+
+    .theater-title {{
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.35;
+    }}
+
+    .theater-desc {{
+      font-size: 0.92rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+      flex: 1;
+    }}
+
+    .theater-actions {{
+      display: flex;
+      gap: 8px;
+    }}
+
+    /* 影音播放選單清單 */
+    .playlist-section {{
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }}
+
+    .playlist-group-title {{
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      border-left: 4px solid #38bdf8;
+      padding-left: 10px;
+    }}
+
+    .playlist-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }}
+
+    .playlist-item {{
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      display: flex;
+      flex-direction: column;
+    }}
+
+    .playlist-item:hover {{
+      background: rgba(30, 41, 59, 0.9);
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+    }}
+
+    .playlist-item.active {{
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+    }}
+
+    .item-thumb-box {{
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #0f172a;
+      overflow: hidden;
+    }}
+
+    .item-thumb {{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }}
+
+    .playlist-item:hover .item-thumb {{
+      transform: scale(1.04);
+    }}
+
+    .item-duration {{
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #fff;
+    }}
+
+    .item-play-overlay {{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      font-size: 1.8rem;
+      color: #fff;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }}
+
+    .playlist-item:hover .item-play-overlay {{
+      opacity: 1;
+    }}
+
+    .playlist-item.active .item-play-overlay {{
+      opacity: 0.9;
+      color: #38bdf8;
+    }}
+
+    .item-content {{
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }}
+
+    .item-series {{
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }}
+
+    .item-title {{
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #f1f5f9;
+      line-height: 1.35;
+    }}
+
+    /* 內嵌預覽彈窗 Modal */
+    #game-modal {{
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.94);
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+    }}
+
+    #game-modal.active {{
+      display: flex;
+    }}
+
+    .modal-header {{
+      height: 52px;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      color: #fff;
+    }}
+
+    .modal-title {{
+      font-size: 1.05rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+
+    .modal-controls {{
+      display: flex;
+      gap: 10px;
+    }}
+
+    .modal-btn {{
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.2s;
+    }}
+
+    .modal-btn:hover {{
+      background: rgba(255, 255, 255, 0.2);
+    }}
+
+    .modal-btn.close {{
+      background: #ef4444;
+      border-color: #ef4444;
+    }}
+
+    .modal-btn.close:hover {{
+      background: #dc2626;
+    }}
+
+    .modal-frame {{
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+    }}
+
+    /* 頁尾 */
+    footer {{
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      margin-top: 20px;
+      color: #64748b;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }}
+  </style>
+</head>
+<body data-default-tab="{default_tab}">
+
+  <div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <header>
+    <div class="badge">
+      <span>⚡</span> 國中數學互動大廳
+    </div>
+    <h1>MATH GAMES &amp; VISUAL LAB</h1>
+    <p class="subtitle">
+      收錄精選國中數學第一人稱 3D 闖關、心算射擊對戰、短除法動態解題實驗室與卡西法秒殺微課堂影音館。免安裝、無後端依賴，支援電腦與平板即開即用！
+    </p>
+  </header>
+
+  <!-- 頂部吸頂分頁導覽列 (Navbar Tabs) -->
+  <nav class="sticky-nav" id="main-nav">
+    <div class="nav-container">
+      <div class="nav-tabs" role="tablist">
+        <a class="nav-tab {'active' if default_tab == 'games' else ''}" data-tab="games" href="games.html" onclick="switchTab('games', event)">
+          <span class="tab-icon">🎮</span>
+          <span class="tab-text">數學對戰遊戲</span>
+          <span class="tab-badge">{len(GAMES)}</span>
+        </a>
+        <a class="nav-tab {'active' if default_tab == 'lab' else ''}" data-tab="lab" href="lab.html" onclick="switchTab('lab', event)">
+          <span class="tab-icon">📐</span>
+          <span class="tab-text">動態解題教室</span>
+          <span class="tab-badge">{len(LAB_ITEMS)}</span>
+        </a>
+        <a class="nav-tab {'active' if default_tab == 'theater' else ''}" data-tab="theater" href="theater.html" onclick="switchTab('theater', event)">
+          <span class="tab-icon">🎬</span>
+          <span class="tab-text">觀念動畫影廳</span>
+          <span class="tab-badge">{len(VIDEOS)}</span>
+        </a>
+        <a class="nav-tab {'active' if default_tab == 'tools' else ''}" data-tab="tools" href="tools.html" onclick="switchTab('tools', event)">
+          <span class="tab-icon">🛠️</span>
+          <span class="tab-text">教師備課百寶箱</span>
+          <span class="tab-badge">{len(TOOLS)}</span>
+        </a>
+      </div>
+      <div class="nav-extra">
+        <a id="btn-open-standalone" class="open-standalone-btn" href="{default_tab}.html" target="_blank" title="在獨立全螢幕分頁開啟當前單元">
+          <span>↗</span> 在新分頁獨立開啟
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==================== 分頁 1：🎮 數學對戰遊戲 ==================== -->
+  <main id="view-games" class="tab-view {'active' if default_tab == 'games' else ''}">
+    <div class="tab-header">
+      <div class="tab-title-row">
+        <h2 class="tab-title"><span>🎮</span> 數學闖關與射擊對戰</h2>
+      </div>
+      <p class="tab-desc">
+        將空間幾何、心算運算與因數倍數轉化為第一人稱 3D FPS、極速心算對決與地圖冒險，擺脫死板題海！
+      </p>
+    </div>
+
+    <!-- 年級篩選膠囊 -->
+    <div class="filter-bar">
+      <span class="filter-label">🎯 年級篩選：</span>
+      <button class="filter-pill active" onclick="filterItems('games', 'all', this)">全部 (5)</button>
+      <button class="filter-pill" onclick="filterItems('games', '7', this)">七年級・運算與質數 (3)</button>
+      <button class="filter-pill" onclick="filterItems('games', '8', this)">八年級・幾何冒險 (1)</button>
+      <button class="filter-pill" onclick="filterItems('games', '9', this)">九年級・3D 幾何 (1)</button>
+    </div>
+
+    <div class="cards-grid">
+      {games_cards}
+    </div>
+  </main>
+
+  <!-- ==================== 分頁 2：📐 動態解題教室 ==================== -->
+  <main id="view-lab" class="tab-view {'active' if default_tab == 'lab' else ''}">
+    <div class="tab-header">
+      <div class="tab-title-row">
+        <h2 class="tab-title"><span>📐</span> 動態解題與視覺化實驗室</h2>
+      </div>
+      <p class="tab-desc">
+        最新收錄《短除法動態教室 v2.7》與《倍數判別法動態教室》！告別死背公式，以即時拖曳、方格重組與幾何著色推導核心概念。
+      </p>
+    </div>
+
+    <!-- 年級篩選膠囊 -->
+    <div class="filter-bar">
+      <span class="filter-label">🎯 年級篩選：</span>
+      <button class="filter-pill active" onclick="filterItems('lab', 'all', this)">全部 (5)</button>
+      <button class="filter-pill" onclick="filterItems('lab', '7', this)">七年級・因倍數與方程式 (3)</button>
+      <button class="filter-pill" onclick="filterItems('lab', '8', this)">八年級・連比應用 (1)</button>
+      <button class="filter-pill" onclick="filterItems('lab', '9', this)">九年級・相似三角形 (1)</button>
+    </div>
+
+    <div class="cards-grid">
+      {lab_cards}
+    </div>
+  </main>
+
+  <!-- ==================== 分頁 3：🎬 觀念動畫影廳 ==================== -->
+  <main id="view-theater" class="tab-view {'active' if default_tab == 'theater' else ''}">
+    <div class="tab-header">
+      <div class="tab-title-row">
+        <h2 class="tab-title"><span>🎬</span> 卡西法秒殺微課堂 ＆ 觀念動畫影廳</h2>
+      </div>
+      <p class="tab-desc">
+        劇院級簡約放映體驗！點擊下方選單即可在上方影廳即時播放，零廣告、無干擾，秒殺會考與段考核心觀念。
+      </p>
+    </div>
+
+    <!-- 頂部放映巨幕 (Cinema Stage) -->
+    <div class="theater-stage">
+      <div class="theater-screen-wrapper">
+        <video id="theater-video" controls playsinline preload="metadata" poster="{VIDEOS[0]['thumb']}">
+          <source src="{VIDEOS[0]['file']}" type="video/mp4">
+          您的瀏覽器不支援直接播放 HTML5 影片。
+        </video>
+      </div>
+      <div class="theater-info-card">
+        <div>
+          <div class="theater-meta">
+            <span id="theater-badge" class="theater-badge">九上幾何 {VIDEOS[0]['duration']}</span>
+            <span id="theater-series" class="theater-series">{VIDEOS[0]['series']}</span>
+          </div>
+          <h3 id="theater-title" class="theater-title">{VIDEOS[0]['title']}</h3>
+          <div id="theater-tags" class="tags" style="margin-top: 10px;">
+            {"".join(f'<span class="tag">{t}</span>' for t in VIDEOS[0]['tags'])}
+          </div>
+          <p id="theater-desc" class="theater-desc" style="margin-top: 12px;">{VIDEOS[0]['desc']}</p>
+        </div>
+        <div class="theater-actions">
+          <a id="theater-newtab" class="btn btn-primary" href="{VIDEOS[0]['file']}" target="_blank" rel="noopener noreferrer">
+            <span>↗</span> 在新分頁播放影片
+          </a>
+          <button class="btn btn-secondary" onclick="replayTheaterVideo()" title="重新播放">
+            <span>↺</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 影音選單清單 -->
+    <div class="playlist-section">
+      <div>
+        <div class="playlist-group-title">🏆 國三九上・圓的幾何大魔王破解系列</div>
+        <div class="playlist-grid">
+          {group1_items}
+        </div>
+      </div>
+
+      <div>
+        <div class="playlist-group-title">🌲 國一七上・數與式 ＆ 因倍數幾何概念系列</div>
+        <div class="playlist-grid">
+          {group2_items}
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== 分頁 4：🛠️ 教師備課百寶箱 ==================== -->
+  <main id="view-tools" class="tab-view {'active' if default_tab == 'tools' else ''}">
+    <div class="tab-header">
+      <div class="tab-title-row">
+        <h2 class="tab-title"><span>🛠️</span> 教師備課與開源工具百寶箱</h2>
+      </div>
+      <p class="tab-desc">
+        精選開源教師備課利器：幾何圖秒級重繪、PDF 本地無伺服器工具箱、硬筆書法字帖生成器與表單 1:1 復刻神器！
+      </p>
+    </div>
+
+    <div class="cards-grid">
+      {tools_cards}
+    </div>
+  </main>
+
+  <!-- 內嵌速覽視窗 Modal -->
+  <div id="game-modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span id="modal-app-icon">🎮</span>
+        <span id="modal-app-title">載入中...</span>
+      </div>
+      <div class="modal-controls">
+        <a id="modal-open-newtab" class="modal-btn" href="#" target="_blank" rel="noopener noreferrer">
+          <span>↗</span> 全螢幕獨立分頁
+        </a>
+        <button class="modal-btn close" onclick="closeModal()">
+          <span>✕</span> 關閉
+        </button>
+      </div>
+    </div>
+    <iframe id="game-frame" class="modal-frame" src="about:blank"></iframe>
+  </div>
+
+  <footer>
+    <p>國中數學互動大廳 ⚡ 100% 純前端靜態架構 ⚡ 支援電腦、平板即開即用</p>
+    <p style="margin-top: 4px; font-size: 0.8rem; color: #475569;">開源專案託管於 GitHub Pages ⚡ 雙軌分頁與獨立頁面支援</p>
+  </footer>
+
+  <script>
+    const VIDEO_DATABASE = {videos_json};
+    const VALID_TABS = ['games', 'lab', 'theater', 'tools'];
+    let currentTab = '{default_tab}';
+
+    // 依據 Hash 或預設值初始化分頁
+    function initTab() {{
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (VALID_TABS.includes(hash)) {{
+        switchTab(hash, null, false);
+      }} else {{
+        switchTab(currentTab, null, false);
+      }}
+    }}
+
+    // 切換分頁（保證只顯示該分頁，絕不混在同一頁）
+    function switchTab(tabId, event, updateHash = true) {{
+      if (event) {{
+        // 若按下 Ctrl/Cmd/Shift 鍵，允許使用者以原生新分頁開啟
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.which === 2) {{
+          return;
+        }}
+        event.preventDefault();
+      }}
+
+      if (!VALID_TABS.includes(tabId)) return;
+      currentTab = tabId;
+
+      // 切換導覽列按鈕狀態
+      document.querySelectorAll('.nav-tab').forEach(tab => {{
+        if (tab.dataset.tab === tabId) {{
+          tab.classList.add('active');
+        }} else {{
+          tab.classList.remove('active');
+        }}
+      }});
+
+      // 切換視圖容器
+      document.querySelectorAll('.tab-view').forEach(view => {{
+        if (view.id === 'view-' + tabId) {{
+          view.classList.add('active');
+        }} else {{
+          view.classList.remove('active');
+        }}
+      }});
+
+      // 更新右上角「在新分頁獨立開啟」連結
+      const standaloneBtn = document.getElementById('btn-open-standalone');
+      if (standaloneBtn) {{
+        standaloneBtn.href = tabId + '.html';
+      }}
+
+      // 更新 URL Hash
+      if (updateHash) {{
+        history.replaceState(null, '', '#' + tabId);
+      }}
+
+      // 若目前在播放影廳且換到了其他分頁，暫停播放
+      if (tabId !== 'theater') {{
+        const theaterVideo = document.getElementById('theater-video');
+        if (theaterVideo && !theaterVideo.paused) {{
+          theaterVideo.pause();
+        }}
+      }}
+    }}
+
+    // 監聽網址 Hash 變更（支援瀏覽器上一頁 / 下一頁）
+    window.addEventListener('hashchange', () => {{
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (VALID_TABS.includes(hash) && hash !== currentTab) {{
+        switchTab(hash, null, false);
+      }}
+    }});
+
+    // 年級與分類篩選器
+    function filterItems(tabId, grade, btnEl) {{
+      const container = document.getElementById('view-' + tabId);
+      if (!container) return;
+
+      const pills = container.querySelectorAll('.filter-pill');
+      pills.forEach(p => p.classList.remove('active'));
+      btnEl.classList.add('active');
+
+      const cards = container.querySelectorAll('.game-card');
+      cards.forEach(card => {{
+        const cardGrades = (card.getAttribute('data-grade') || '').split(',');
+        if (grade === 'all' || cardGrades.includes(grade)) {{
+          card.style.display = 'flex';
+        }} else {{
+          card.style.display = 'none';
+        }}
+      }});
+    }}
+
+    // 影音影廳：切換選中播放影片
+    function selectVideo(index) {{
+      if (index < 0 || index >= VIDEO_DATABASE.length) return;
+      const v = VIDEO_DATABASE[index];
+
+      const player = document.getElementById('theater-video');
+      const badge = document.getElementById('theater-badge');
+      const series = document.getElementById('theater-series');
+      const title = document.getElementById('theater-title');
+      const tagsBox = document.getElementById('theater-tags');
+      const desc = document.getElementById('theater-desc');
+      const newtabBtn = document.getElementById('theater-newtab');
+
+      // 更新播放器影片來源
+      player.pause();
+      player.src = v.file;
+      player.poster = v.thumb;
+      player.load();
+      player.play().catch(e => console.log('Autoplay handled:', e));
+
+      // 更新影片資訊
+      badge.textContent = v.series.split('・')[0] + ' ' + v.duration;
+      series.textContent = v.series;
+      title.textContent = v.title;
+      tagsBox.innerHTML = v.tags.map(t => `<span class="tag">${{t}}</span>`).join('');
+      desc.textContent = v.desc;
+      newtabBtn.href = v.file;
+
+      // 更新播放清單選中項目樣式
+      document.querySelectorAll('.playlist-item').forEach((item, i) => {{
+        if (i === index) {{
+          item.classList.add('active');
+        }} else {{
+          item.classList.remove('active');
+        }}
+      }});
+
+      // 平滑捲動至放映巨幕
+      const stage = document.querySelector('.theater-stage');
+      if (stage) {{
+        stage.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
+      }}
+    }}
+
+    function replayTheaterVideo() {{
+      const player = document.getElementById('theater-video');
+      if (player) {{
+        player.currentTime = 0;
+        player.play();
+      }}
+    }}
+
+    // 彈窗速覽（Modal）
+    function launchInApp(url, title, icon = '🎮') {{
+      const modal = document.getElementById('game-modal');
+      const frame = document.getElementById('game-frame');
+      const titleEl = document.getElementById('modal-app-title');
+      const iconEl = document.getElementById('modal-app-icon');
+      const newtabBtn = document.getElementById('modal-open-newtab');
+
+      titleEl.textContent = title;
+      iconEl.textContent = icon;
+      newtabBtn.href = url;
+
+      frame.src = url;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }}
+
+    function closeModal() {{
+      const modal = document.getElementById('game-modal');
+      const frame = document.getElementById('game-frame');
+
+      frame.src = 'about:blank';
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }}
+
+    window.addEventListener('keydown', (e) => {{
+      if (e.key === 'Escape') {{
+        closeModal();
+      }}
+    }});
+
+    // 頁面初次載入
+    window.addEventListener('DOMContentLoaded', initTab);
+  </script>
+</body>
+</html>
+'''
+    return html
+
+def main():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # 1. Generate index.html (defaults to games)
+    index_html = build_html("games")
+    with open(os.path.join(base_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(index_html)
+    print("Generated: index.html")
+
+    # 2. Generate games.html
+    games_html = build_html("games")
+    with open(os.path.join(base_dir, "games.html"), "w", encoding="utf-8") as f:
+        f.write(games_html)
+    print("Generated: games.html")
+
+    # 3. Generate lab.html
+    lab_html = build_html("lab")
+    with open(os.path.join(base_dir, "lab.html"), "w", encoding="utf-8") as f:
+        f.write(lab_html)
+    print("Generated: lab.html")
+
+    # 4. Generate theater.html
+    theater_html = build_html("theater")
+    with open(os.path.join(base_dir, "theater.html"), "w", encoding="utf-8") as f:
+        f.write(theater_html)
+    print("Generated: theater.html")
+
+    # 5. Generate tools.html
+    tools_html = build_html("tools")
+    with open(os.path.join(base_dir, "tools.html"), "w", encoding="utf-8") as f:
+        f.write(tools_html)
+    print("Generated: tools.html")
+
+if __name__ == "__main__":
+    main()
