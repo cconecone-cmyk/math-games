@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>質數海戰｜課堂搶答大屏</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #121a2b;
+    --panel2: #182338;
+    --border: #2a3a55;
+    --text: #e8eef8;
+    --muted: #8fa3c1;
+    --red: #ef4444;
+    --red-dim: #7f1d1d;
+    --blue: #3b82f6;
+    --blue-dim: #1e3a8a;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --purple: #a78bfa;
+    --danger: #f87171;
+    --ok: #4ade80;
+    --radius: 16px;
+    --shadow: 0 10px 40px rgba(0,0,0,.45);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  button, input, select {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 12px;
+    transition: transform .08s ease, filter .15s ease, opacity .15s;
+    touch-action: manipulation;
+  }
+  button:active:not(:disabled) { transform: scale(.97); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .btn {
+    padding: 14px 22px;
+    min-height: 52px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+  }
+  .btn:hover:not(:disabled) { filter: brightness(1.12); }
+  .btn-primary {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border: none;
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(37,99,235,.35);
+  }
+  .btn-green { background: #15803d; border-color: #16a34a; color: #fff; }
+  .btn-red { background: var(--red-dim); border-color: var(--red); color: #fecaca; }
+  .btn-blue { background: var(--blue-dim); border-color: var(--blue); color: #bfdbfe; }
+  .btn-amber { background: #92400e; border-color: var(--amber); color: #fde68a; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .screen { display: none; height: 100%; width: 100%; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ========== 設定頁 ========== */
+  #setup {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    width: min(920px, 100%);
+    box-shadow: var(--shadow);
+  }
+  .card h1 {
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    margin-bottom: 6px;
+    letter-spacing: .04em;
+  }
+  .card .sub {
+    color: var(--muted);
+    margin-bottom: 22px;
+    font-size: 1rem;
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 700px) {
+    .grid2 { grid-template-columns: 1fr; }
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .field label {
+    font-size: .9rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .field input[type="text"],
+  .field input[type="number"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 1.15rem;
+    min-height: 48px;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--blue); }
+  .team-red label { color: #fca5a5; }
+  .team-blue label { color: #93c5fd; }
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0 16px;
+    font-size: 1.05rem;
+  }
+  .check-row input { width: 22px; height: 22px; accent-color: var(--amber); }
+  .setup-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .setup-actions .btn-primary { flex: 1; min-width: 180px; font-size: 1.25rem; padding: 16px; }
+
+  /* ========== 對戰場 ========== */
+  #battle { padding: 12px 16px 10px; gap: 10px; }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .topbar .title {
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: .06em;
+    color: var(--purple);
+  }
+  .topbar .meta {
+    color: var(--muted);
+    font-size: .95rem;
+  }
+  .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .arena {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr;
+    gap: 14px;
+    min-height: 0;
+  }
+  @media (max-width: 900px) {
+    .arena { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  }
+  .team-panel {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: var(--shadow);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .team-panel.red { border-color: rgba(239,68,68,.45); }
+  .team-panel.blue { border-color: rgba(59,130,246,.45); }
+  .team-panel.locked-winner {
+    box-shadow: 0 0 0 3px var(--amber), var(--shadow);
+  }
+  .team-panel.red.locked-winner { border-color: var(--red); }
+  .team-panel.blue.locked-winner { border-color: var(--blue); }
+  .team-name {
+    font-size: clamp(1.2rem, 2.5vw, 1.7rem);
+    font-weight: 800;
+  }
+  .team-panel.red .team-name { color: #fca5a5; }
+  .team-panel.blue .team-name { color: #93c5fd; }
+  .team-score {
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .team-stats {
+    color: var(--muted);
+    font-size: .95rem;
+  }
+  .buzz {
+    width: 100%;
+    margin-top: 8px;
+    min-height: 88px;
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    font-weight: 900;
+    letter-spacing: .08em;
+    border-radius: 14px;
+  }
+  .buzz.red-buzz {
+    background: linear-gradient(180deg, #ef4444, #b91c1c);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(239,68,68,.4);
+  }
+  .buzz.blue-buzz {
+    background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(59,130,246,.4);
+  }
+  .buzz.locked-self {
+    outline: 3px solid var(--amber);
+    filter: brightness(1.15);
+  }
+  .buzz.locked-other {
+    opacity: .35;
+  }
+
+  .center-stage {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: .04em;
+  }
+  .badge-level-A { background: #14532d; color: #86efac; border: 1px solid #22c55e; }
+  .badge-level-B { background: #1e3a8a; color: #93c5fd; border: 1px solid #3b82f6; }
+  .badge-level-C { background: #581c87; color: #e9d5ff; border: 1px solid #a855f7; }
+  .badge-type {
+    background: var(--panel2);
+    color: var(--amber);
+    border: 1px solid #854d0e;
+  }
+  .badge-q {
+    background: var(--panel2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .report-num {
+    font-size: clamp(4.5rem, 14vw, 9rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: .02em;
+    text-shadow: 0 4px 30px rgba(167,139,250,.25);
+    word-break: break-all;
+    padding: 8px 0;
+  }
+  .lock-banner {
+    display: none;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    background: rgba(245,158,11,.15);
+    border: 1px solid var(--amber);
+    color: #fcd34d;
+  }
+  .lock-banner.show { display: block; }
+  .reveal-box {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 16px 18px;
+    text-align: left;
+  }
+  .reveal-box.show { display: block; }
+  .reveal-box h3 {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .reveal-answer {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 800;
+    color: var(--ok);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .reveal-note {
+    color: #cbd5e1;
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+  .myth-warning {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(239,68,68,.15);
+    border: 1px solid var(--red);
+    color: #fecaca;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .myth-ok {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(34,197,94,.12);
+    border: 1px solid var(--green);
+    color: #bbf7d0;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .paused-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(11,18,32,.82);
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: .2em;
+    color: var(--amber);
+    z-index: 5;
+  }
+  .paused-overlay.show { display: flex; }
+
+  /* 教師列 */
+  .teacher-bar {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .teacher-bar .sep {
+    width: 1px;
+    height: 36px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+  .teacher-bar .btn { min-height: 48px; padding: 10px 14px; font-size: .95rem; }
+  .myth-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid #854d0e;
+    border-radius: 10px;
+    font-weight: 700;
+    color: #fcd34d;
+    min-height: 48px;
+  }
+  .myth-check input { width: 22px; height: 22px; accent-color: var(--amber); }
+  .myth-check.hidden { display: none; }
+  .score-hint {
+    color: var(--muted);
+    font-size: .85rem;
+    margin-left: auto;
+  }
+
+  /* ========== 結算 ========== */
+  #result {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .result-card { text-align: center; }
+  .result-card h1 { margin-bottom: 20px; }
+  .result-teams {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 600px) {
+    .result-teams { grid-template-columns: 1fr; }
+  }
+  .result-team {
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 24px;
+    border: 2px solid var(--border);
+  }
+  .result-team.winner { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(245,158,11,.3); }
+  .result-team .rn { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+  .result-team .rs { font-size: 4rem; font-weight: 900; line-height: 1.1; }
+  .result-team .rc { color: var(--muted); margin-top: 8px; font-size: 1.1rem; }
+  .tie-banner {
+    display: none;
+    margin-bottom: 16px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--amber);
+  }
+  .tie-banner.show { display: block; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: #1e293b;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-weight: 700;
+    z-index: 100;
+    transition: transform .25s ease;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ========== 設定 ========== -->
+<section id="setup" class="screen active">
+  <div class="card">
+    <h1>⚓ 質數海戰｜課堂搶答</h1>
+    <p class="sub">台灣國中質因數分解單元 · 大屏投影搶答計分（紙本海圖另用）</p>
+    <div class="grid2">
+      <div class="field team-red">
+        <label>紅隊隊名</label>
+        <input type="text" id="nameRed" value="紅隊" maxlength="12" />
+      </div>
+      <div class="field team-blue">
+        <label>藍隊隊名</label>
+        <input type="text" id="nameBlue" value="藍隊" maxlength="12" />
+      </div>
+      <div class="field">
+        <label>起始分數</label>
+        <input type="number" id="startScore" value="0" min="0" max="9999" step="1" />
+      </div>
+      <div class="field">
+        <label>答對加分</label>
+        <input type="number" id="correctPts" value="10" min="0" max="999" step="1" />
+      </div>
+      <div class="field">
+        <label>特殊關額外加分（有喊迷思）</label>
+        <input type="number" id="specialBonus" value="5" min="0" max="999" step="1" />
+      </div>
+      <div class="field">
+        <label>答錯扣分（0＝不扣）</label>
+        <input type="number" id="wrongPts" value="5" min="0" max="999" step="1" />
+      </div>
+    </div>
+    <label class="check-row">
+      <input type="checkbox" id="deductWrong" checked />
+      <span>答錯是否扣分（勾選則依上方「答錯扣分」執行）</span>
+    </label>
+    <label class="check-row">
+      <input type="checkbox" id="shuffleQs" checked />
+      <span>題庫洗牌（保留 A／B／C 層級標籤；同層內打亂）</span>
+    </label>
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:14px;line-height:1.5;">
+      特殊關規則（1、91）：學生須先喊「不是質數／要先分解」等迷思提示，教師勾選「有喊迷思」後才給滿分（答對分＋額外加分）。未喊迷思：建議不得分或僅半價（揭示時會提示）。
+    </p>
+    <div class="setup-actions">
+      <button type="button" class="btn btn-ghost" id="btnFsSetup">全螢幕</button>
+      <button type="button" class="btn btn-primary" id="btnStart">開始海戰</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 對戰 ========== -->
+<section id="battle" class="screen">
+  <div class="topbar">
+    <div>
+      <div class="title">質數海戰</div>
+      <div class="meta" id="progressMeta">第 1／15 題</div>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="btn btn-ghost" id="btnFsBattle">全螢幕</button>
+      <button type="button" class="btn btn-ghost" id="btnPause">暫停</button>
+      <button type="button" class="btn btn-amber" id="btnEnd">結束看結算</button>
+    </div>
+  </div>
+
+  <div class="arena">
+    <div class="team-panel red" id="panelRed">
+      <div class="team-name" id="dispNameRed">紅隊</div>
+      <div class="team-score" id="scoreRed">0</div>
+      <div class="team-stats" id="statsRed">答對 0</div>
+      <button type="button" class="buzz red-buzz" id="buzzRed">🔴 搶答鎖定</button>
+    </div>
+
+    <div class="center-stage" id="centerStage">
+      <div class="paused-overlay" id="pausedOverlay">暫停中</div>
+      <div class="badges">
+        <span class="badge badge-q" id="qIndexBadge">Q1</span>
+        <span class="badge badge-level-A" id="levelBadge">A</span>
+        <span class="badge badge-type" id="typeBadge">類型</span>
+      </div>
+      <div class="report-num" id="reportNum">—</div>
+      <div class="lock-banner" id="lockBanner">紅隊搶答！</div>
+      <div class="reveal-box" id="revealBox">
+        <h3>標準答案</h3>
+        <div class="reveal-answer" id="revealAnswer"></div>
+        <div class="reveal-note" id="revealNote"></div>
+        <div id="mythMsg"></div>
+      </div>
+    </div>
+
+    <div class="team-panel blue" id="panelBlue">
+      <div class="team-name" id="dispNameBlue">藍隊</div>
+      <div class="team-score" id="scoreBlue">0</div>
+      <div class="team-stats" id="statsBlue">答對 0</div>
+      <button type="button" class="buzz blue-buzz" id="buzzBlue">🔵 搶答鎖定</button>
+    </div>
+  </div>
+
+  <div class="teacher-bar">
+    <button type="button" class="btn" id="btnNext">下一題</button>
+    <button type="button" class="btn btn-amber" id="btnReveal">揭示答案</button>
+    <span class="sep"></span>
+    <button type="button" class="btn btn-green" id="btnRedOk">記紅隊對</button>
+    <button type="button" class="btn btn-red" id="btnRedBad">記紅隊錯</button>
+    <button type="button" class="btn btn-green" id="btnBlueOk">記藍隊對</button>
+    <button type="button" class="btn btn-blue" id="btnBlueBad">記藍隊錯</button>
+    <span class="sep"></span>
+    <label class="myth-check hidden" id="mythCheckWrap">
+      <input type="checkbox" id="mythSaid" />
+      <span>有喊迷思（1／91）</span>
+    </label>
+    <span class="score-hint" id="scoreHint"></span>
+  </div>
+</section>
+
+<!-- ========== 結算 ========== -->
+<section id="result" class="screen">
+  <div class="card result-card">
+    <h1>🏁 海戰結算</h1>
+    <div class="tie-banner" id="tieBanner">平手！</div>
+    <div class="result-teams">
+      <div class="result-team" id="resRed">
+        <div class="rn" id="resNameRed" style="color:#fca5a5">紅隊</div>
+        <div class="rs" id="resScoreRed">0</div>
+        <div class="rc" id="resCorrectRed">答對 0 題</div>
+      </div>
+      <div class="result-team" id="resBlue">
+        <div class="rn" id="resNameBlue" style="color:#93c5fd">藍隊</div>
+        <div class="rs" id="resScoreBlue">0</div>
+        <div class="rc" id="resCorrectBlue">答對 0 題</div>
+      </div>
+    </div>
+    <div class="setup-actions" style="justify-content:center">
+      <button type="button" class="btn btn-ghost" id="btnFsResult">全螢幕</button>
+      <button type="button" class="btn btn-primary" id="btnReplay">再來一局</button>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /** 內建題庫（對齊 math-curriculum CSV） */
+  const BANK = [
+    { level: 'A', num: '1', type: '特殊關／偽質數', answer: '不是質數（因數只有自己；定義上排除）', note: '先喊「不是質數」才得分', special: true },
+    { level: 'A', num: '91', type: '特殊關／偽質數', answer: '7×13', note: '先喊「不是質數／要先分解」再寫分解式', special: true },
+    { level: 'A', num: '87', type: '判別／合數', answer: '3×29', note: '易誤判為質數', special: false },
+    { level: 'A', num: '97', type: '判別／質數', answer: '是質數', note: '對照組：真質數', special: false },
+    { level: 'A', num: '1與91對照', type: '迷思複習', answer: '1 不是質數；91＝7×13', note: '手冊注意事項第1點', special: false },
+    { level: 'B', num: '84', type: '標準分解式', answer: '2^2×3×7', note: '兩層以上質因數', special: false },
+    { level: 'B', num: '45', type: '標準分解式', answer: '3^2×5', note: '', special: false },
+    { level: 'B', num: '60', type: '標準分解式', answer: '2^2×3×5', note: '', special: false },
+    { level: 'B', num: '75', type: '標準分解式', answer: '3×5^2', note: '', special: false },
+    { level: 'B', num: '98', type: '標準分解式', answer: '2×7^2', note: '', special: false },
+    { level: 'C', num: '360', type: '標準分解式', answer: '2^3×3^2×5', note: '多質因＋次方；質因≤100', special: false },
+    { level: 'C', num: '1001', type: '標準分解式', answer: '7×11×13', note: '三個不同質因數', special: false },
+    { level: 'C', num: '180', type: '標準分解式', answer: '2^2×3^2×5', note: '', special: false },
+    { level: 'C', num: '210', type: '標準分解式', answer: '2×3×5×7', note: '銜接 2-2 公因公倍例', special: false },
+    { level: 'C', num: '72', type: '標準分解式', answer: '2^3×3^2', note: '', special: false }
+  ];
+
+  const state = {
+    queue: [],
+    idx: 0,
+    scores: { red: 0, blue: 0 },
+    correct: { red: 0, blue: 0 },
+    names: { red: '紅隊', blue: '藍隊' },
+    correctPts: 10,
+    specialBonus: 5,
+    wrongPts: 5,
+    deductWrong: true,
+    locked: null,       // 'red' | 'blue' | null
+    revealed: false,
+    scoredThisQ: false, // 本題是否已記分（防重複）
+    paused: false,
+    mythSaid: false
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  /** debounce：防連點 */
+  function debounce(fn, ms) {
+    let t = 0;
+    return function (...args) {
+      const now = Date.now();
+      if (now - t < ms) return;
+      t = now;
+      return fn.apply(this, args);
+    };
+  }
+
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('show'), 1800);
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  /** 同層內洗牌，層級順序 A→B→C 保留 */
+  function buildQueue(doShuffle) {
+    const levels = ['A', 'B', 'C'];
+    const out = [];
+    levels.forEach((lv) => {
+      let group = BANK.filter((q) => q.level === lv);
+      if (doShuffle) group = shuffle(group);
+      out.push(...group);
+    });
+    return out;
+  }
+
+  /** 將 2^2×3×7 轉成 KaTeX 可渲染字串 */
+  function toKatex(expr) {
+    if (!expr) return '';
+    // 已有純文字說明則只把 ^n 換成 ^{n}
+    let s = String(expr)
+      .replace(/\^(\d+)/g, '^{$1}')
+      .replace(/×/g, '\\times ')
+      .replace(/＝/g, '=')
+      .replace(/;/g, '；');
+    // 若含中文／括號說明，分段：數學片段用 $...$，其餘原文
+    // 簡化：整段包進，KaTeX 對中文會失敗，改用手寫混合
+    const hasCJK = /[\u4e00-\u9fff]/.test(expr);
+    if (!hasCJK) {
+      return '$' + s + '$';
+    }
+    // 把連續的數字/運算符片段抽成數學
+    return String(expr).replace(/([0-9]+(?:\^[0-9]+)?(?:\s*[×xX*]\s*[0-9]+(?:\^[0-9]+)?)*)/g, (m) => {
+      const math = m.replace(/\^(\d+)/g, '^{$1}').replace(/[×xX*]/g, '\\times ');
+      return '$' + math + '$';
+    }).replace(/＝/g, '＝');
+  }
+
+  function renderMath(el, raw) {
+    const htmlish = toKatex(raw);
+    // 把 $...$ 片段交給 KaTeX
+    if (typeof katex === 'undefined') {
+      el.textContent = raw;
+      return;
+    }
+    el.innerHTML = '';
+    const parts = htmlish.split(/(\$[^$]+\$)/g);
+    parts.forEach((part) => {
+      if (part.startsWith('$') && part.endsWith('$')) {
+        const span = document.createElement('span');
+        try {
+          katex.render(part.slice(1, -1), span, { throwOnError: false, displayMode: false });
+        } catch (e) {
+          span.textContent = part.slice(1, -1);
+        }
+        el.appendChild(span);
+      } else if (part) {
+        el.appendChild(document.createTextNode(part));
+      }
+    });
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+    $(id).classList.add('active');
+  }
+
+  function toggleFs() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => toast('無法進入全螢幕'));
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+
+  function currentQ() {
+    return state.queue[state.idx] || null;
+  }
+
+  function updateScoresUI() {
+    $('scoreRed').textContent = state.scores.red;
+    $('scoreBlue').textContent = state.scores.blue;
+    $('statsRed').textContent = '答對 ' + state.correct.red;
+    $('statsBlue').textContent = '答對 ' + state.correct.blue;
+  }
+
+  function updateLockUI() {
+    const buzzR = $('buzzRed');
+    const buzzB = $('buzzBlue');
+    const panelR = $('panelRed');
+    const panelB = $('panelBlue');
+    const banner = $('lockBanner');
+    buzzR.classList.remove('locked-self', 'locked-other');
+    buzzB.classList.remove('locked-self', 'locked-other');
+    panelR.classList.remove('locked-winner');
+    panelB.classList.remove('locked-winner');
+    if (!state.locked) {
+      banner.classList.remove('show');
+      buzzR.disabled = state.paused || state.revealed;
+      buzzB.disabled = state.paused || state.revealed;
+      return;
+    }
+    const name = state.locked === 'red' ? state.names.red : state.names.blue;
+    banner.textContent = (state.locked === 'red' ? '🔴 ' : '🔵 ') + name + ' 搶答鎖定！';
+    banner.classList.add('show');
+    if (state.locked === 'red') {
+      buzzR.classList.add('locked-self');
+      buzzB.classList.add('locked-other');
+      panelR.classList.add('locked-winner');
+    } else {
+      buzzB.classList.add('locked-self');
+      buzzR.classList.add('locked-other');
+      panelB.classList.add('locked-winner');
+    }
+    buzzR.disabled = true;
+    buzzB.disabled = true;
+  }
+
+  function renderQuestion() {
+    const q = currentQ();
+    if (!q) {
+      endGame();
+      return;
+    }
+    state.locked = null;
+    state.revealed = false;
+    state.scoredThisQ = false;
+    state.mythSaid = false;
+    $('mythSaid').checked = false;
+    $('revealBox').classList.remove('show');
+    $('mythMsg').innerHTML = '';
+
+    $('progressMeta').textContent = '第 ' + (state.idx + 1) + '／' + state.queue.length + ' 題';
+    $('qIndexBadge').textContent = 'Q' + (state.idx + 1);
+    const lb = $('levelBadge');
+    lb.textContent = '層級 ' + q.level;
+    lb.className = 'badge badge-level-' + q.level;
+    $('typeBadge').textContent = q.type;
+    $('reportNum').textContent = q.num;
+
+    const isMythQ = q.special || q.num === '1' || q.num === '91';
+    $('mythCheckWrap').classList.toggle('hidden', !isMythQ);
+
+    $('scoreHint').textContent =
+      '加分 ' + state.correctPts +
+      (state.deductWrong && state.wrongPts > 0 ? '／扣分 ' + state.wrongPts : '／不扣分') +
+      '／特殊額外 +' + state.specialBonus;
+
+    updateLockUI();
+    updateScoresUI();
+  }
+
+  function doBuzz(team) {
+    if (state.paused || state.revealed || state.locked) return;
+    state.locked = team;
+    updateLockUI();
+    toast((team === 'red' ? state.names.red : state.names.blue) + ' 搶到！');
+  }
+
+  function doReveal() {
+    const q = currentQ();
+    if (!q) return;
+    state.revealed = true;
+    updateLockUI();
+    $('revealBox').classList.add('show');
+    renderMath($('revealAnswer'), q.answer);
+    $('revealNote').textContent = q.note ? ('備註：' + q.note) : '';
+
+    const mythEl = $('mythMsg');
+    mythEl.innerHTML = '';
+    if (q.special) {
+      const said = $('mythSaid').checked;
+      state.mythSaid = said;
+      if (said) {
+        mythEl.innerHTML = '<div class="myth-ok">✓ 已勾「有喊迷思」→ 可給滿分（答對 ' +
+          state.correctPts + ' + 特殊額外 ' + state.specialBonus + '＝' +
+          (state.correctPts + state.specialBonus) + ' 分）</div>';
+      } else {
+        const half = Math.floor(state.correctPts / 2);
+        mythEl.innerHTML = '<div class="myth-warning">⚠ 未勾「有喊迷思」→ 依規則建議<strong>不得分</strong>，或僅給半價（' +
+          half + ' 分）。請教師自行選擇記分方式；記「對」時若未喊迷思將以半價計算。</div>';
+      }
+    }
+  }
+
+  function award(team, isCorrect) {
+    if (state.scoredThisQ) {
+      toast('本題已記過分');
+      return;
+    }
+    const q = currentQ();
+    if (!q) return;
+    if (!state.revealed) {
+      toast('請先揭示答案再記分');
+      return;
+    }
+    // 建議記給搶答方，但仍允許教師指定
+    let delta = 0;
+    if (isCorrect) {
+      if (q.special) {
+        const said = $('mythSaid').checked;
+        if (said) {
+          delta = state.correctPts + state.specialBonus;
+        } else {
+          // 未喊迷思：半價（可為 0）
+          delta = Math.floor(state.correctPts / 2);
+          toast('特殊關未喊迷思 → 半價 +' + delta);
+        }
+      } else {
+        delta = state.correctPts;
+      }
+      state.scores[team] += delta;
+      state.correct[team] += 1;
+      toast((team === 'red' ? state.names.red : state.names.blue) + ' 答對 +' + delta);
+    } else {
+      if (state.deductWrong && state.wrongPts > 0) {
+        delta = -state.wrongPts;
+        state.scores[team] += delta;
+        toast((team === 'red' ? state.names.red : state.names.blue) + ' 答錯 ' + delta);
+      } else {
+        toast((team === 'red' ? state.names.red : state.names.blue) + ' 答錯（不扣分）');
+      }
+    }
+    state.scoredThisQ = true;
+    updateScoresUI();
+  }
+
+  function nextQ() {
+    if (state.idx >= state.queue.length - 1) {
+      endGame();
+      return;
+    }
+    state.idx += 1;
+    renderQuestion();
+  }
+
+  function endGame() {
+    showScreen('result');
+    $('resNameRed').textContent = state.names.red;
+    $('resNameBlue').textContent = state.names.blue;
+    $('resScoreRed').textContent = state.scores.red;
+    $('resScoreBlue').textContent = state.scores.blue;
+    $('resCorrectRed').textContent = '答對 ' + state.correct.red + ' 題';
+    $('resCorrectBlue').textContent = '答對 ' + state.correct.blue + ' 題';
+    $('resRed').classList.remove('winner');
+    $('resBlue').classList.remove('winner');
+    $('tieBanner').classList.remove('show');
+    if (state.scores.red > state.scores.blue) {
+      $('resRed').classList.add('winner');
+    } else if (state.scores.blue > state.scores.red) {
+      $('resBlue').classList.add('winner');
+    } else {
+      $('tieBanner').classList.add('show');
+    }
+  }
+
+  function startGame() {
+    state.names.red = ($('nameRed').value || '紅隊').trim().slice(0, 12);
+    state.names.blue = ($('nameBlue').value || '藍隊').trim().slice(0, 12);
+    const start = Math.max(0, parseInt($('startScore').value, 10) || 0);
+    state.correctPts = Math.max(0, parseInt($('correctPts').value, 10) || 0);
+    state.specialBonus = Math.max(0, parseInt($('specialBonus').value, 10) || 0);
+    state.wrongPts = Math.max(0, parseInt($('wrongPts').value, 10) || 0);
+    state.deductWrong = $('deductWrong').checked;
+    state.scores = { red: start, blue: start };
+    state.correct = { red: 0, blue: 0 };
+    state.idx = 0;
+    state.paused = false;
+    $('pausedOverlay').classList.remove('show');
+    $('btnPause').textContent = '暫停';
+    state.queue = buildQueue($('shuffleQs').checked);
+    $('dispNameRed').textContent = state.names.red;
+    $('dispNameBlue').textContent = state.names.blue;
+    showScreen('battle');
+    renderQuestion();
+  }
+
+  function togglePause() {
+    state.paused = !state.paused;
+    $('pausedOverlay').classList.toggle('show', state.paused);
+    $('btnPause').textContent = state.paused ? '繼續' : '暫停';
+    updateLockUI();
+  }
+
+  // —— 綁定（皆 debounce） ——
+  $('btnStart').addEventListener('click', debounce(startGame, 400));
+  $('btnReplay').addEventListener('click', debounce(() => showScreen('setup'), 400));
+  $('btnNext').addEventListener('click', debounce(nextQ, 350));
+  $('btnReveal').addEventListener('click', debounce(doReveal, 350));
+  $('btnEnd').addEventListener('click', debounce(endGame, 400));
+  $('btnPause').addEventListener('click', debounce(togglePause, 300));
+  $('buzzRed').addEventListener('click', debounce(() => doBuzz('red'), 280));
+  $('buzzBlue').addEventListener('click', debounce(() => doBuzz('blue'), 280));
+  $('btnRedOk').addEventListener('click', debounce(() => award('red', true), 350));
+  $('btnRedBad').addEventListener('click', debounce(() => award('red', false), 350));
+  $('btnBlueOk').addEventListener('click', debounce(() => award('blue', true), 350));
+  $('btnBlueBad').addEventListener('click', debounce(() => award('blue', false), 350));
+  $('mythSaid').addEventListener('change', () => {
+    if (state.revealed && currentQ()?.special) doReveal();
+  });
+  ['btnFsSetup', 'btnFsBattle', 'btnFsResult'].forEach((id) => {
+    $(id).addEventListener('click', debounce(toggleFs, 300));
+  });
+
+  // 鍵盤捷徑（教師）：N 下一題、R 揭示、1/2 紅藍搶答、空白暫停
+  document.addEventListener('keydown', (e) => {
+    if ($('battle').classList.contains('active') === false) return;
+    if (e.target.matches('input, textarea')) return;
+    const k = e.key.toLowerCase();
+    if (k === 'n') { e.preventDefault(); nextQ(); }
+    else if (k === 'r') { e.preventDefault(); doReveal(); }
+    else if (k === '1') { e.preventDefault(); doBuzz('red'); }
+    else if (k === '2') { e.preventDefault(); doBuzz('blue'); }
+    else if (k === ' ') { e.preventDefault(); togglePause(); }
+  });
+})();
+</script>
+</body>
+</html>

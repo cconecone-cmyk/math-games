@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>跑道相遇動態解析</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Microsoft JhengHei', sans-serif; background: #f0f4f8; color: #333; }
+    .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+    h1 { text-align: center; color: #2c3e50; margin-bottom: 16px; font-size: 1.3rem; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: all 0.3s; background: #dce3ea; color: #555; }
+    .tab.active { background: #3498db; color: white; box-shadow: 0 3px 8px rgba(52,152,219,0.4); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 1rem; color: #2c3e50; margin-bottom: 10px; border-left: 4px solid #3498db; padding-left: 8px; }
+    canvas { display: block; margin: 0 auto; }
+    .slider-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 4px; }
+    .slider-row label { min-width: 80px; font-size: 0.9rem; color: #555; }
+    input[type=range] { flex: 1; accent-color: #3498db; }
+    .time-display { font-size: 1.1rem; font-weight: bold; color: #e74c3c; min-width: 90px; text-align: right; }
+    .speed-display { font-size: 1.1rem; font-weight: bold; color: #8e44ad; min-width: 90px; text-align: right; }
+    .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .info-box { border-radius: 8px; padding: 8px 10px; text-align: center; font-size: 0.85rem; }
+    .info-box .val { font-size: 1.1rem; font-weight: bold; margin-top: 2px; }
+    .legend { display: flex; gap: 16px; justify-content: center; margin: 8px 0; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
+    .meet-log { max-height: 90px; overflow-y: auto; font-size: 0.82rem; color: #555; border: 1px solid #eee; border-radius: 6px; padding: 6px 8px; margin-top: 6px; background: #fafafa; }
+    .meet-log p { margin: 2px 0; }
+    .highlight { color: #e74c3c; font-weight: bold; }
+    .formula-box { background: #eaf4fb; border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; line-height: 1.7; }
+    .formula-box span.f { color: #2980b9; font-weight: bold; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.88rem; font-weight: bold; }
+    .btn-play { background: #27ae60; color: white; }
+    .btn-stop { background: #e74c3c; color: white; }
+    .btn-reset { background: #95a5a6; color: white; }
+    .answer-box { background: #eafaf1; border: 2px solid #27ae60; border-radius: 8px; padding: 10px 14px; text-align: center; font-size: 1rem; font-weight: bold; color: #1e8449; margin-top: 8px; }
+    .speed-card { background: #f8f0ff; border: 1.5px solid #c39bd3; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+    .speed-card h3 { font-size: 0.92rem; color: #6c3483; margin-bottom: 6px; }
+    input[type=range]#speedSlider1 { accent-color: #8e44ad; }
+    input[type=range]#speedSlider2 { accent-color: #8e44ad; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🏃 跑道相遇動態解析</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(1)">第1題：甲乙在起跑點相遇</button>
+    <button class="tab" onclick="switchTab(2)">第2題：三人同時在起跑點相遇</button>
+  </div>
+
+  <!-- Panel 1 -->
+  <div class="panel active" id="panel1">
+    <div class="card">
+      <h2>📐 解題公式</h2>
+      <div class="formula-box">
+        甲一圈：<span class="f">400 ÷ 4 = 100 秒</span>　乙一圈：<span class="f">400 ÷ 5 = 80 秒</span><br>
+        同時回起跑點週期：<span class="f">LCM(100, 80) = 400 秒</span><br>
+        15分鐘 = 900 秒　→　900 ÷ 400 = <span class="f">2 次</span>（餘100秒）
+      </div>
+    </div>
+    <div class="card">
+      <h2>🎮 動態跑道（拖動時間軸觀察）</h2>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div>甲（4公尺/秒）</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3498db"></div>乙（5公尺/秒）</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f39c12;border:2px solid #888"></div>起跑點</div>
+      </div>
+      <canvas id="canvas1" width="500" height="500"></canvas>
+      <div class="speed-card">
+        <h3>⚡ 播放速度調整</h3>
+        <div class="slider-row">
+          <label>播放速度</label>
+          <input type="range" id="speedSlider1" min="1" max="20" value="2" oninput="updateSpeed1()">
+          <span class="speed-display" id="speedLabel1">× 2</span>
+        </div>
+        <div style="font-size:0.78rem;color:#888;margin-top:2px;">← 慢（逐秒觀察）　　快（快速瀏覽）→</div>
+      </div>
+      <div class="slider-row">
+        <label>時間（秒）</label>
+        <input type="range" id="slider1" min="0" max="900" value="0" oninput="updateQ1()">
+        <span class="time-display" id="time1">0 秒</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-play" onclick="playQ1()">▶ 播放</button>
+        <button class="btn btn-stop" onclick="stopAnim()">⏸ 暫停</button>
+        <button class="btn btn-reset" onclick="resetQ1()">↺ 重置</button>
+      </div>
+      <div class="info-grid">
+        <div class="info-box" style="background:#fdecea;">
+          <div>甲位置</div>
+          <div class="val" id="pos1A" style="color:#e74c3c">0 m</div>
+        </div>
+        <div class="info-box" style="background:#eaf2fb;">
+          <div>乙位置</div>
+          <div class="val" id="pos1B" style="color:#3498db">0 m</div>
+        </div>
+        <div class="info-box" style="background:#fef9e7;">
+          <div>相遇次數</div>
+          <div class="val" id="meet1" style="color:#e67e22">0 次</div>
+        </div>
+      </div>
+      <div class="meet-log" id="log1"><p>尚未相遇</p></div>
+      <div class="answer-box">📌 在 900 秒內，甲乙共在起跑點相遇 <span id="ans1val">0</span> 次</div>
+    </div>
+  </div>
+
+  <!-- Panel 2 -->
+  <div class="panel" id="panel2">
+    <div class="card">
+      <h2>📐 解題公式</h2>
+      <div class="formula-box">
+        甲、乙同時在起跑點週期：<span class="f">LCM(100, 80) = 400 秒</span><br>
+        甲丙反向，相對速度：<span class="f">4 + 8.5 = 12.5 公尺/秒</span><br>
+        甲丙相遇週期：<span class="f">400 ÷ 12.5 = 32 秒</span><br>
+        三人同時在起跑點：<span class="f">LCM(400, 32) = 800 秒</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🎮 動態跑道（拖動時間軸觀察）</h2>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div>甲（順時針 4/秒）</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3498db"></div>乙（順時針 5/秒）</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#8e44ad"></div>丙（逆時針 8.5/秒）</div>
+      </div>
+      <canvas id="canvas2" width="500" height="500"></canvas>
+      <div class="speed-card">
+        <h3>⚡ 播放速度調整</h3>
+        <div class="slider-row">
+          <label>播放速度</label>
+          <input type="range" id="speedSlider2" min="1" max="20" value="2" oninput="updateSpeed2()">
+          <span class="speed-display" id="speedLabel2">× 2</span>
+        </div>
+        <div style="font-size:0.78rem;color:#888;margin-top:2px;">← 慢（逐秒觀察）　　快（快速瀏覽）→</div>
+      </div>
+      <div class="slider-row">
+        <label>時間（秒）</label>
+        <input type="range" id="slider2" min="0" max="900" value="0" oninput="updateQ2()">
+        <span class="time-display" id="time2">0 秒</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-play" onclick="playQ2()">▶ 播放</button>
+        <button class="btn btn-stop" onclick="stopAnim()">⏸ 暫停</button>
+        <button class="btn btn-reset" onclick="resetQ2()">↺ 重置</button>
+      </div>
+      <div class="info-grid">
+        <div class="info-box" style="background:#fdecea;">
+          <div>甲（圈數）</div>
+          <div class="val" id="pos2A" style="color:#e74c3c">0.00</div>
+        </div>
+        <div class="info-box" style="background:#eaf2fb;">
+          <div>乙（圈數）</div>
+          <div class="val" id="pos2B" style="color:#3498db">0.00</div>
+        </div>
+        <div class="info-box" style="background:#f5eef8;">
+          <div>丙（圈數）</div>
+          <div class="val" id="pos2C" style="color:#8e44ad">0.00</div>
+        </div>
+      </div>
+      <div class="meet-log" id="log2"><p>尚未三人同時在起跑點</p></div>
+      <div class="answer-box">📌 三人第一次同時在起跑點：<span id="ans2val">尚未發生</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let animId = null;
+  let animTime = 0;
+  let animTarget = null;
+  let speed1 = 2;
+  let speed2 = 2;
+  let lastTimestamp = null;
+  let accumulator = 0;
+
+  function updateSpeed1() {
+    speed1 = parseInt(document.getElementById('speedSlider1').value);
+    document.getElementById('speedLabel1').textContent = '× ' + speed1;
+  }
+  function updateSpeed2() {
+    speed2 = parseInt(document.getElementById('speedSlider2').value);
+    document.getElementById('speedLabel2').textContent = '× ' + speed2;
+  }
+
+  function switchTab(n) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n-1));
+    document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===n-1));
+    stopAnim();
+  }
+
+  function drawTrack(ctx, cx, cy, R, r) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    // 背景
+    ctx.fillStyle = '#e8f5e9';
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    // 跑道外圈填色
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2);
+    ctx.fillStyle = '#c8e6c9'; ctx.fill();
+    // 內圈挖空
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.fillStyle = '#e8f5e9'; ctx.fill();
+    // 邊線
+    ctx.strokeStyle = '#4caf50'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+    // 虛線中線
+    ctx.setLineDash([6,6]); ctx.strokeStyle = '#a5d6a7'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, (R+r)/2, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 起跑點在正上方 (cx, cy - (R+r)/2)
+    let sx = cx;
+    let sy = cy - (R+r)/2;
+    // 起跑線（從內圈到外圈的短線）
+    ctx.strokeStyle = '#e67e22'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r);
+    ctx.lineTo(cx, cy - R);
+    ctx.stroke();
+    // 起跑點圓點
+    ctx.fillStyle = '#f39c12';
+    ctx.beginPath(); ctx.arc(sx, sy, 8, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#e67e22'; ctx.lineWidth = 2; ctx.stroke();
+    // 標籤在圓點上方
+    ctx.fillStyle = '#c0392b';
+    ctx.font = 'bold 12px Microsoft JhengHei';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('起跑點', sx, sy - 12);
+  }
+
+  function runnerAngle(dist, total, clockwise) {
+    let frac = (dist % total) / total;
+    if (!clockwise) frac = -frac;
+    // 從正上方（-π/2）開始
+    return frac * Math.PI * 2 - Math.PI / 2;
+  }
+
+  function drawRunner(ctx, cx, cy, rm, dist, total, clockwise, color, label) {
+    let angle = runnerAngle(dist, total, clockwise);
+    let x = cx + rm * Math.cos(angle);
+    let y = cy + rm * Math.sin(angle);
+    ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI*2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 11px Microsoft JhengHei';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y);
+  }
+
+  function isAtStart(dist, total, tol) {
+    let mod = dist % total;
+    return mod < tol || mod > total - tol;
+  }
+
+  // ---- Q1 ----
+  function updateQ1() {
+    let t = parseInt(document.getElementById('slider1').value);
+    document.getElementById('time1').textContent = t + ' 秒';
+    let dA = 4 * t, dB = 5 * t;
+    document.getElementById('pos1A').textContent = (dA % 400) + ' m';
+    document.getElementById('pos1B').textContent = (dB % 400) + ' m';
+
+    let meets = [];
+    for (let i = 1; i <= t; i++) {
+      if (i % 100 === 0 && i % 80 === 0) meets.push(i);
+    }
+    document.getElementById('meet1').textContent = meets.length + ' 次';
+    let log = document.getElementById('log1');
+    if (meets.length === 0) { log.innerHTML = '<p>尚未相遇</p>'; }
+    else { log.innerHTML = meets.map((m,idx) => `<p>✅ 第 ${idx+1} 次相遇：<span class="highlight">t = ${m} 秒</span></p>`).join(''); }
+    document.getElementById('ans1val').textContent = meets.length;
+
+    let canvas = document.getElementById('canvas1');
+    let ctx = canvas.getContext('2d');
+    let cx = 250, cy = 270, R = 200, r = 110;
+    drawTrack(ctx, cx, cy, R, r);
+
+    let atStart = isAtStart(dA, 400, 5) && isAtStart(dB, 400, 5) && t > 0;
+    if (atStart) {
+      // 閃光在起跑點（正上方）
+      ctx.beginPath(); ctx.arc(cx, cy - (R+r)/2, 22, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,215,0,0.6)'; ctx.fill();
+    }
+    drawRunner(ctx, cx, cy, (R+r)/2, dA, 400, true, '#e74c3c', '甲');
+    drawRunner(ctx, cx, cy, (R+r)/2, dB, 400, true, '#3498db', '乙');
+
+    ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 14px Microsoft JhengHei';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('t = ' + t + ' 秒', 10, 10);
+    if (atStart) {
+      ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 16px Microsoft JhengHei';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🎉 同時在起跑點！', cx, cy);
+    }
+  }
+
+  function playQ1() {
+    stopAnim();
+    animTarget = 'q1';
+    animTime = parseFloat(document.getElementById('slider1').value);
+    lastTimestamp = null; accumulator = 0;
+    function step(ts) {
+      if (animTime > 900) { stopAnim(); return; }
+      if (lastTimestamp !== null) {
+        let delta = ts - lastTimestamp;
+        accumulator += delta * speed1 / 1000 * 10;
+        let steps = Math.floor(accumulator);
+        accumulator -= steps;
+        animTime = Math.min(animTime + steps, 900);
+      }
+      lastTimestamp = ts;
+      document.getElementById('slider1').value = Math.floor(animTime);
+      updateQ1();
+      if (animTime < 900) animId = requestAnimationFrame(step);
+    }
+    animId = requestAnimationFrame(step);
+  }
+  function resetQ1() { stopAnim(); document.getElementById('slider1').value = 0; updateQ1(); }
+
+  // ---- Q2 ----
+  function updateQ2() {
+    let t = parseInt(document.getElementById('slider2').value);
+    document.getElementById('time2').textContent = t + ' 秒';
+    let dA = 4*t, dB = 5*t, dC = 8.5*t;
+    document.getElementById('pos2A').textContent = (dA/400).toFixed(2);
+    document.getElementById('pos2B').textContent = (dB/400).toFixed(2);
+    document.getElementById('pos2C').textContent = (dC/400).toFixed(2);
+
+    let candidates = [];
+    for (let i = 1; i <= t; i++) {
+      let a = (4*i) % 400, b = (5*i) % 400, c = (8.5*i) % 400;
+      if (a < 0.5 && b < 0.5 && c < 0.5) candidates.push(i);
+    }
+    let log = document.getElementById('log2');
+    if (candidates.length === 0) { log.innerHTML = '<p>尚未三人同時在起跑點</p>'; }
+    else { log.innerHTML = candidates.map((m,idx) => `<p>✅ 第${idx+1}次：<span class="highlight">t = ${m} 秒</span></p>`).join(''); }
+    document.getElementById('ans2val').textContent = candidates.length > 0 ? candidates[0] + ' 秒' : '尚未發生';
+
+    let canvas = document.getElementById('canvas2');
+    let ctx = canvas.getContext('2d');
+    let cx = 250, cy = 270, R = 200, r = 110;
+    drawTrack(ctx, cx, cy, R, r);
+
+    let atAll = isAtStart(dA,400,4) && isAtStart(dB,400,4) && isAtStart(dC,400,4) && t > 0;
+    if (atAll) {
+      ctx.beginPath(); ctx.arc(cx, cy - (R+r)/2, 26, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,215,0,0.65)'; ctx.fill();
+    }
+
+    // 甲：中線
+    drawRunner(ctx, cx, cy, (R+r)/2, dA, 400, true, '#e74c3c', '甲');
+    // 乙：外側
+    let angle2 = runnerAngle(dB, 400, true);
+    let rm2 = (R+r)/2 + 18;
+    let bx = cx + rm2*Math.cos(angle2), by = cy + rm2*Math.sin(angle2);
+    ctx.beginPath(); ctx.arc(bx, by, 11, 0, Math.PI*2);
+    ctx.fillStyle = '#3498db'; ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = 'white'; ctx.font = 'bold 11px Microsoft JhengHei';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('乙', bx, by);
+    // 丙：內側逆時針
+    let angle3 = runnerAngle(dC, 400, false);
+    let rm3 = (R+r)/2 - 18;
+    let ccx = cx + rm3*Math.cos(angle3), ccy = cy + rm3*Math.sin(angle3);
+    ctx.beginPath(); ctx.arc(ccx, ccy, 11, 0, Math.PI*2);
+    ctx.fillStyle = '#8e44ad'; ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = 'white'; ctx.font = 'bold 11px Microsoft JhengHei';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('丙', ccx, ccy);
+
+    ctx.font = '12px Arial'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#e74c3c'; ctx.textAlign = 'left';
+    ctx.fillText('→ 順時針', 10, 30);
+    ctx.fillStyle = '#8e44ad';
+    ctx.fillText('← 逆時針', 10, 48);
+
+    ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 14px Microsoft JhengHei';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('t = ' + t + ' 秒', 10, 10);
+    if (atAll) {
+      ctx.fillStyle = '#c0392b'; ctx.font = 'bold 16px Microsoft JhengHei';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🎉 三人同時在起跑點！', cx, cy);
+    }
+  }
+
+  function playQ2() {
+    stopAnim();
+    animTarget = 'q2';
+    animTime = parseFloat(document.getElementById('slider2').value);
+    lastTimestamp = null; accumulator = 0;
+    function step(ts) {
+      if (animTime > 900) { stopAnim(); return; }
+      if (lastTimestamp !== null) {
+        let delta = ts - lastTimestamp;
+        accumulator += delta * speed2 / 1000 * 10;
+        let steps = Math.floor(accumulator);
+        accumulator -= steps;
+        animTime = Math.min(animTime + steps, 900);
+      }
+      lastTimestamp = ts;
+      document.getElementById('slider2').value = Math.floor(animTime);
+      updateQ2();
+      if (animTime < 900) animId = requestAnimationFrame(step);
+    }
+    animId = requestAnimationFrame(step);
+  }
+  function resetQ2() { stopAnim(); document.getElementById('slider2').value = 0; updateQ2(); }
+
+  function stopAnim() {
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+    lastTimestamp = null; accumulator = 0;
+  }
+
+  updateQ1();
+  updateQ2();
+</script>
+</body>
+</html>

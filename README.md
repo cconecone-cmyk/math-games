@@ -1,46 +1,55 @@
-# 國中數學互動遊戲大廳 (Math Games Hub)
+# 國中數學互動遊戲與動態解題大廳 (Math Games & Visual Lab)
 
-🎮 收錄精選國中數學線上闖關、幾何探險與心算射擊對戰遊戲。免安裝、無後端依賴，支援電腦與平板即開即玩！
+⚡ 專為國中數學打造的互動遊戲與動態視覺化解題大廳。100% 純前端技術、免安裝、無後端依賴，支援電腦與平板即開即玩！
+
+🔗 **線上即玩入口 (GitHub Pages)**：[https://cconecone-cmyk.github.io/math-games/](https://cconecone-cmyk.github.io/math-games/)
 
 ---
 
-## 🕹️ 收錄遊戲清單
+## 🕹️ 第一分區：數學闖關與射擊對戰 (Math Games)
 
-1. **🎯 數學射擊對戰 MATH FPS (v0.2.3)**
+1. **🔫 幾何小夥伴 3D 闖關 (Geometry FPS 3D)**
+   - 檔案：`geometry-fps-3d.html`
+   - 技術架構：Three.js 3D 渲染、PointerLockControls 視角鎖定、Raycaster 射擊判定。
+   - 核心玩法：經典 CS 玩法的 3D 第一人稱射擊！支援鍵盤 WASD 走位、滑鼠鎖定視角瞄準、槍枝後座力動畫與即時射線判定，身臨其境穿梭 3D 幾何戰場！
+   - 適合年級：國中全階段數學冒險。
+
+2. **🎯 數學射擊對戰 MATH FPS (2D 雙軌版)**
    - 檔案：`math-fps.html`
-   - 特色：結合第一人稱射擊對戰與即時心算反應，瞄準題目靶心極速解題。
+   - 核心玩法：瞄準題目靶心，以最快速度扣下運算扳機！將心算融合為快節奏射擊對決，考驗極限運算手速。
    - 適合年級：國中全階段心算與代數訓練。
 
-2. **🔷 幾何小夥伴 Geometry Quest (v5.0)**
+3. **🔷 幾何小夥伴冒險 (Geometry Quest 5.0)**
    - 檔案：`geometry-quest.html`
-   - 特色：翰林版七上、七下、八上完整冒險地圖！結合幾何概念、題庫關卡與成就系統。
+   - 核心玩法：完整收錄翰林版七上、七下、八上課程！探索幾何地圖、解答章節任務、擊敗 BOSS 並解鎖成就系統。
    - 適合年級：七年級至八年級幾何與代數單元。
+
+4. **🚢 質數海戰 (Prime Battle)**
+   - 檔案：`prime-sea-battle.html`
+   - 核心玩法：將質數判別與質因數分解化為海戰拆彈防禦戰！鎖定目標艦隊與炸彈密碼，精準辨識質數弱點一擊必殺！
+   - 適合年級：七年級整數的運算、因數與倍數。
 
 ---
 
-## 🚀 如何發布到 GitHub 線上玩 (GitHub Pages)
+## 💡 第二分區：動態解題與幾何視覺化實驗室 (Dynamic Math & Visual Lab)
 
-本專案為 **100% 純前端靜態網頁架構**，無須任何伺服器即可直接透過 GitHub Pages 免費上線：
+5. **🏃 速率：同向與逆向跑操場動態解析**
+   - 檔案：`running-track-speed.html`
+   - 概念剖析：七上一元一次方程式應用題（速率與行程問題）。
+   - 動態特色：告別死背公式！動態演示環形跑道上兩人「同向追趕（相距一圈）」與「逆向相遇（合走一圈）」的即時軌跡，滑桿自由調整速度與圈長，直觀掌握相對運動。
 
-1. **建立 GitHub 儲存庫 (Repository)**：
-   - 到 [GitHub.com](https://github.com) 點擊 **New repository**。
-   - 命名為例如 `math-games`（設為 **Public** 公開）。
-2. **上傳本資料夾的所有檔案**：
-   - 包含：`index.html`、`math-fps.html`、`geometry-quest.html`、`README.md`。
-   - 可直接使用網頁的「Upload files」按鈕拖曳上傳，或透過 Git 指令推送：
-     ```bash
-     git init
-     git add .
-     git commit -m "feat: initial math games hub release"
-     git branch -M main
-     git remote add origin https://github.com/<你的使用者名稱>/math-games.git
-     git push -u origin main
-     ```
-3. **開啟 GitHub Pages 網站**：
-   - 進入儲存庫的 **Settings** ➔ 側邊欄點擊 **Pages**。
-   - 在 **Build and deployment** 下方的 **Branch** 選擇 `main` 分支、資料夾選 `/ (root)`，點擊 **Save**。
-   - 等待約 1~2 分鐘，上方就會出現綠色的專屬線上網址：
-     ```
-     https://<你的使用者名稱>.github.io/math-games/
-     ```
-   - 點開即可線上遊玩！分享該網址給學生或家長，手機、平板、電腦皆可免安裝秒開！
+6. **🪢 連比：斷開繩子動態解析**
+   - 檔案：`rope-ratio-split.html`
+   - 概念剖析：八下連比單元段考高頻常考魔王題。
+   - 動態特色：將長度比例切割、重新綁定與分段以動態視覺化拖曳圖表呈現，一眼看穿比與實際長度的換算邏輯。
+
+7. **📐 平行四邊形經典相似推導**
+   - 檔案：`parallelogram-similarity.html`
+   - 概念剖析：九上幾何相似形經典歷屆題型。
+   - 動態特色：平行四邊形內部截線形成的相似三角形群！即時動態著色標記對應邊與對應角，步驟式推導邊長幾何比例關係。
+
+---
+
+## 💻 本地離線遊玩方式
+
+本專案所有檔案均為 **單一靜態 HTML5 檔案**（內含相應之 JS/CSS/圖片素材），下載後直接以 Chrome / Edge / Safari 瀏覽器連擊開啟即可離線使用！

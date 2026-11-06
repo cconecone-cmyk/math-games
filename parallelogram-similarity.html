@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>平行四邊形比例｜投影修正版</title>
+<style>
+:root{--ink:#19304e;--muted:#61728b;--red:#dc4252;--blue:#2868dd;--border:#dce5f1;--bg:#eef3f9}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;width:100%;height:100%;font-family:system-ui,"Noto Sans TC",sans-serif;color:var(--ink);background:var(--bg)}
+body{overflow:hidden}
+button{font:inherit;font-weight:650;border:1px solid var(--border);border-radius:9px;padding:8px 12px;background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap}
+button:hover{background:#e7efff}
+button.active,button.primary{background:var(--blue);border-color:var(--blue);color:white}
+button:disabled{opacity:.35;cursor:default}
+.app{width:100%;height:100vh;height:100dvh;padding:12px;display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;gap:9px;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{margin:0;font-size:clamp(19px,2vw,30px);line-height:1.2}
+.tools,.controls{display:flex;gap:7px;align-items:center}
+.question{background:white;border:1px solid var(--border);border-radius:12px;padding:10px 14px;font-size:clamp(14px,1.25vw,20px);line-height:1.5}
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.steps button{padding:8px 5px;font-size:clamp(13px,1.1vw,18px)}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.05fr);gap:10px;min-height:0;overflow:hidden}
+.panel{min-height:0;overflow:hidden;border:1px solid var(--border);border-radius:14px;background:white;padding:12px;display:grid;gap:8px}
+h2{margin:0;font-size:clamp(16px,1.4vw,23px);line-height:1.3}
+.original-panel{grid-template-rows:auto minmax(0,1fr) auto auto}
+.extract-panel{grid-template-rows:auto minmax(0,1fr) auto}
+.svg-box{position:relative;min-height:0;min-width:0;overflow:hidden}
+.svg-box svg{position:absolute;inset:0;display:block;width:100%;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:clamp(12px,1vw,16px)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px}
+.caption{margin:0;color:var(--muted);font-size:clamp(12px,1vw,16px);line-height:1.45}
+.extracts{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:8px;min-height:0;overflow:hidden}
+.tri-card{border:1px solid var(--border);border-radius:10px;background:#f7f9fd;padding:8px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:4px;min-height:0;overflow:hidden}
+.tri-card strong{font-size:clamp(12px,1vw,17px);line-height:1.3}
+.explanation{grid-template-rows:auto auto minmax(0,1fr) auto}
+.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.phases button{padding:7px 3px;font-size:clamp(12px,1vw,16px)}
+.copy{min-height:0;display:flex;flex-direction:column;justify-content:center;gap:12px;overflow:hidden}
+.description{margin:0;font-size:clamp(15px,1.45vw,23px);line-height:1.7}
+.formula{border-radius:12px;padding:14px 8px;background:#edf3ff;font-size:clamp(20px,2vw,33px);font-weight:800;line-height:1.45;text-align:center;overflow-wrap:anywhere}
+.note{margin:0;background:#fff6e4;border-radius:10px;padding:10px;font-size:clamp(12px,1.05vw,17px);line-height:1.6}
+.progress{color:var(--muted);font-size:12px}
+footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.keyhint{font-size:12px;color:var(--muted)}
+.mini-result{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:0;text-align:center;font-size:clamp(16px,1.6vw,25px);line-height:1.5}
+.mini-result b{color:var(--blue)}
+svg text{font-family:system-ui,sans-serif;fill:var(--ink)}
+.pulse{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.48}}
+@media(max-height:650px){
+  .app{padding:8px;gap:6px}
+  .panel{padding:9px;gap:6px}
+  .question{padding:7px 10px}
+  button{padding:6px 9px}
+  .copy{gap:8px}
+  .description{font-size:clamp(14px,1.2vw,19px);line-height:1.5}
+  .formula{padding:9px 5px;font-size:clamp(19px,1.7vw,27px)}
+  .note{padding:7px;font-size:12px;line-height:1.4}
+  .caption{font-size:11px}
+}
+@media(max-height:460px){
+  body:not(.mobile) .caption,body:not(.mobile) .keyhint{display:none}
+  body:not(.mobile) .original-panel{grid-template-rows:auto minmax(0,1fr) auto}
+  body:not(.mobile) .extract-panel{grid-template-rows:auto minmax(0,1fr)}
+  body:not(.mobile) .note{display:none}
+}
+body.mobile{height:auto;overflow:auto}
+body.mobile .app{height:auto;min-height:100dvh;overflow:visible;display:flex;flex-direction:column;padding:12px;gap:12px}
+body.mobile header{flex-direction:column;align-items:flex-start}
+body.mobile .tools{flex-wrap:wrap}
+body.mobile .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.mobile .workspace{display:flex;flex-direction:column;overflow:visible}
+body.mobile .panel{display:flex;flex-direction:column;overflow:visible;padding:14px}
+body.mobile .explanation{order:-1}
+body.mobile .copy{overflow:visible;gap:12px}
+body.mobile .description{font-size:18px}
+body.mobile .formula{font-size:27px}
+body.mobile .note{font-size:14px}
+body.mobile .original-panel>.svg-box{height:360px;flex:none}
+body.mobile .extracts{display:flex;flex-direction:column;overflow:visible}
+body.mobile .tri-card{display:flex;flex-direction:column;min-height:240px;overflow:visible}
+body.mobile .tri-card .svg-box{height:210px;flex:none}
+body.mobile .mini-result{min-height:190px;font-size:23px}
+body.mobile footer{flex-direction:column;align-items:flex-start}
+body.mobile .caption{font-size:14px}
+body.mobile h2{font-size:20px}
+@media(prefers-reduced-motion:reduce){.pulse{animation:none}}
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>平行四邊形比例｜逐步推導</h1>
+    <div class="tools">
+      <button id="mode">手機版</button>
+      <button id="fullscreen">全螢幕</button>
+      <button id="reset">重來</button>
+    </div>
+  </header>
+  <section class="question">
+    ABCD 是平行四邊形；BC 與 AF 的延長線交於 E，BD 與 AF 交於 G。<br>
+    已知 <b>BG：DG＝3：2</b>，求 <b>EC：BC＝？</b>（F 在 CD 上）
+  </section>
+  <nav class="steps" id="steps" aria-label="推導步驟"></nav>
+  <section class="workspace">
+    <article class="panel original-panel">
+      <h2>① 原圖｜同步亮線</h2>
+      <div class="svg-box" id="original"></div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--red)"></i>第一組</span>
+        <span><i class="dot" style="background:var(--blue)"></i>第二組</span>
+      </div>
+      <p class="caption" id="originalCaption"></p>
+    </article>
+    <article class="panel extract-panel">
+      <h2 id="extractTitle">② 抽出比較</h2>
+      <div class="extracts" id="extracted"></div>
+      <p class="caption" id="extractCaption"></p>
+    </article>
+    <article class="panel explanation">
+      <h2 id="stepTitle"></h2>
+      <div class="phases" id="phases"></div>
+      <div class="copy">
+        <p class="description" id="description"></p>
+        <div class="formula" id="formula" aria-live="polite"></div>
+        <p class="note" id="note"></p>
+      </div>
+      <div class="progress" id="progress"></div>
+    </article>
+  </section>
+  <footer>
+    <div class="controls">
+      <button id="prev">← 上一步</button>
+      <button id="next" class="primary">下一步 →</button>
+      <button id="play">▶ 自動播放</button>
+    </div>
+    <span class="keyhint">Enter／→ 下一步　← 上一步　空白鍵播放　1–4 選步驟</span>
+  </footer>
+</main>
+<script>
+const R='#dc4252',B='#2868dd',K='#344863';
+const $=id=>document.getElementById(id);
+const P={A:[350,60],B:[120,60],C:[80,260],D:[310,260],E:[60,360],F:[156.667,260],G:[234,180]};
+const lessons=[
+  {
+    tab:'1. 第一次相似',title:'第一步：求 FD：AB',
+    groups:[['BG','DG'],['AB','FD']],
+    desc:[
+      'AB ∥ FD，且兩個三角形在 G 的角互為對頂角，所以 △ABG ∼ △FDG。先看 BG、DG。',
+      '相似三角形的對應邊成比例：BG 對應 DG，AB 對應 FD。',
+      '把 BG：DG＝3：2 代入，得到 AB：FD＝3：2，因此 FD 是 AB 的 ⅔。'
+    ],
+    formula:['BG：DG＝3：2','AB：FD＝BG：DG','FD＝⅔ AB'],
+    note:'頂點對應：A ↔ F、B ↔ D、G ↔ G。',
+    caption:'AB ∥ CD；F 在 CD 上，所以 AB ∥ FD。',
+    extract:'旋轉成同方向比較；小、大三角形的邊長比是 2：3。'
+  },
+  {
+    tab:'2. 線段相減',title:'第二步：求 CF：AB',
+    groups:[['CD','AB'],['CF','FD']],
+    desc:[
+      '平行四邊形的對邊等長，所以 CD＝AB。上一個步驟已得到 FD＝⅔ AB。',
+      'F 在 C、D 之間。整段 CD 減去右段 FD，就得到左段 CF。',
+      'CF＝AB－⅔ AB＝⅓ AB。因此 CF：AB＝1：3。'
+    ],
+    formula:['CD＝AB','CF＝CD－FD','CF：AB＝1：3'],
+    note:'同一直線上：CD＝CF＋FD。',
+    caption:'注意順序是 C → F → D；CF 為左段，FD 為右段。',
+    extract:'把 AB、CD 拉直並排，CD 分成 1 份與 2 份。'
+  },
+  {
+    tab:'3. 第二次相似',title:'第三步：求 EC：EB',
+    groups:[['CF','AB'],['EC','EB']],
+    desc:[
+      'CF ∥ BA，且兩個三角形共用 E 的角，所以 △ECF ∼ △EBA。',
+      '對應邊是 EC 與 EB、CF 與 BA。因此 EC：EB＝CF：BA。',
+      '第二步得到 CF：AB＝1：3，代入後得到 EC：EB＝1：3。'
+    ],
+    formula:['CF：BA＝1：3','EC：EB＝CF：BA','EC：EB＝1：3'],
+    note:'頂點對應：E ↔ E、C ↔ B、F ↔ A。EB 是整段！',
+    caption:'小三角形 ECF 與大三角形 EBA 共用頂角 E。',
+    extract:'大三角形保留 C、F 分割線；對應邊長比是 1：3。'
+  },
+  {
+    tab:'4. 最後答案',title:'第四步：轉成 EC：BC',
+    groups:[['EC','EB'],['BC']],
+    desc:[
+      'EC：EB＝1：3。把 EC 看成 1 份，整段 EB 看成 3 份。',
+      'E、C、B 依序共線，所以 BC＝EB－EC＝3 份－1 份＝2 份。',
+      'EC 為 1 份，BC 為 2 份。因此空格填入 1：2。'
+    ],
+    formula:['EC＝1 份；EB＝3 份','BC＝3－1＝2 份','EC：BC＝1：2'],
+    note:'不要混淆：EC：EB＝1：3，但 EC：BC＝1：2。',
+    caption:'沿 E → C → B：1 份＋2 份＝整段 3 份。',
+    extract:'只改變線段的方向，不改變分段比例。'
+  }
+];
+let step=0,phase=0,timer=null;
+function line(a,b,c=K,w=2.5,flash=false){
+  return `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${flash?' class="pulse"':''}/>`;
+}
+function text(x,y,s,size=19,c=K){
+  return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" style="fill:${c}">${s}</text>`;
+}
+function highlights(){
+  const g=lessons[step].groups;
+  if(phase===0)return g[0].map(n=>[n,R]);
+  if(phase===1)return g[1].map(n=>[n,B]);
+  return [...g[0].map(n=>[n,R]),...g[1].map(n=>[n,B])];
+}
+function color(n){
+  const a=highlights().find(([s])=>s===n||s===n.split('').reverse().join(''));
+  return a?a[1]:K;
+}
+function svg(content,view='0 0 320 180',label='線段比較'){
+  return `<svg viewBox="${view}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${label}">${content}</svg>`;
+}
+function original(){
+  let s='';
+  if(step===0)s+='<polygon points="350,60 120,60 234,180" fill="#dc4252" opacity=".09"/><polygon points="156.667,260 310,260 234,180" fill="#2868dd" opacity=".09"/>';
+  if(step===2)s+='<polygon points="60,360 120,60 350,60" fill="#2868dd" opacity=".06"/><polygon points="60,360 80,260 156.667,260" fill="#dc4252" opacity=".12"/>';
+  ['AB','BC','CD','DA','CE','AE','BD'].forEach(n=>s+=line(P[n[0]],P[n[1]]));
+  highlights().forEach(([n,c])=>s+=line(P[n[0]],P[n[1]],c,6,true));
+  const offsets={A:[13,-10],B:[-13,-10],C:[-15,4],D:[15,5],E:[-9,22],F:[0,24],G:[-16,-4]};
+  Object.entries(P).forEach(([n,p])=>{
+    s+=`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${K}"/>`;
+    s+=text(p[0]+offsets[n][0],p[1]+offsets[n][1],n,22);
+  });
+  s+=text(224,30,'BG：DG＝3：2',16);
+  return svg(s,'20 0 375 395','平行四邊形原圖');
+}
+function triangle(names,scale,edgeNames,split=false){
+  const base=[[55,32],[265,32],[160,142]],center=[160,92];
+  const p=base.map(a=>[center[0]+(a[0]-center[0])*scale,center[1]+(a[1]-center[1])*scale]);
+  let s=`<polygon points="${p.map(a=>a.join(',')).join(' ')}" fill="#e1eafa"/>`;
+  [[0,1],[1,2],[2,0]].forEach(([a,b],i)=>{
+    const c=color(edgeNames[i]);
+    s+=line(p[a],p[b],c,c===K?2.5:5,c!==K);
+    const x=(p[a][0]+p[b][0])/2+(i===1?28:i===2?-28:0);
+    const y=(p[a][1]+p[b][1])/2+(i===0?-10:5);
+    s+=text(x,y,edgeNames[i],16,c);
+  });
+  p.forEach((a,i)=>s+=text(a[0]+(i===0?-16:i===1?16:0),a[1]+(i===2?24:0),names[i],20));
+  if(split){
+    const c=[p[2][0]+(p[0][0]-p[2][0])/3,p[2][1]+(p[0][1]-p[2][1])/3];
+    const f=[p[2][0]+(p[1][0]-p[2][0])/3,p[2][1]+(p[1][1]-p[2][1])/3];
+    s+=line(c,f,'#8596ad',1.8);
+    s+=text(c[0]-13,c[1]-3,'C',16)+text(f[0]+13,f[1]-3,'F',16);
+  }
+  return svg(s);
+}
+function card(title,graphic){
+  return `<section class="tri-card"><strong>${title}</strong><div class="svg-box">${graphic}</div></section>`;
+}
+function bar(top){
+  let s='';
+  if(top){
+    const c=color('AB');
+    s+=text(160,35,'AB＝3 份',21);
+    s+=line([30,85],[290,85],c,6,c!==K);
+    s+=text(30,69,'A',20)+text(290,69,'B',20);
+    s+=text(160,135,'CD＝AB',21);
+  }else{
+    const left=step===1?'CF':'EC',right=step===1?'FD':'BC';
+    const nodes=step===1?['C','F','D']:['E','C','B'];
+    s+=line([30,78],[117,78],color(left),6,color(left)!==K);
+    s+=line([117,78],[290,78],color(right),6,color(right)!==K);
+    [30,117,290].forEach((x,i)=>s+=text(x,61,nodes[i],21));
+    s+=text(73,110,`${left}＝1 份`,17,R)+text(204,110,`${right}＝2 份`,17,B);
+    const whole=step===1?'CD':'EB';
+    s+=line([30,142],[290,142],color(whole),3,color(whole)!==K);
+    s+=text(160,170,`${whole}＝3 份`,18);
+  }
+  return svg(s);
+}
+function extracted(){
+  if(step===0)return card('小三角形 △FDG',triangle(['F','D','G'],2/3,['FD','DG','GF']))+
+    card('大三角形 △ABG',triangle(['A','B','G'],1,['AB','BG','GA']));
+  if(step===1)return card('對邊等長：AB＝CD',bar(true))+card('CD 分成 CF 與 FD',bar(false));
+  if(step===2)return card('小三角形 △ECF（旋轉後）',triangle(['C','F','E'],1/3,['CF','FE','EC']))+
+    card('大三角形 △EBA（保留分割線）',triangle(['B','A','E'],1,['AB','AE','EB'],true));
+  return card('整段 EB 與兩個部分',bar(false))+
+    `<section class="tri-card"><strong>比例轉換</strong><div class="mini-result"><span>EC：EB＝1：3</span><span>BC＝3－1＝2 份</span><b>${phase===2?'答案：EC：BC＝1：2':'EC 是 1 份，BC 是 2 份'}</b></div></section>`;
+}
+function render(){
+  const d=lessons[step];
+  $('steps').innerHTML=lessons.map((x,i)=>`<button data-step="${i}" class="${i===step?'active':''}" aria-pressed="${i===step}">${x.tab}</button>`).join('');
+  $('phases').innerHTML=['第一組','第二組','合併／結論'].map((s,i)=>`<button data-phase="${i}" class="${i===phase?'active':''}" aria-pressed="${i===phase}">${s}</button>`).join('');
+  $('stepTitle').textContent=d.title;
+  $('description').textContent=d.desc[phase];
+  $('formula').textContent=d.formula[phase];
+  $('note').textContent=d.note;
+  $('original').innerHTML=original();
+  $('extracted').innerHTML=extracted();
+  $('originalCaption').textContent=d.caption;
+  $('extractCaption').textContent=d.extract;
+  $('extractTitle').textContent=step===1||step===3?'② 抽出線段比較':'② 抽出三角形';
+  $('progress').textContent=`步驟 ${step+1}／4　階段 ${phase+1}／3　總進度 ${step*3+phase+1}／12`;
+  $('prev').disabled=step===0&&phase===0;
+  $('next').disabled=step===3&&phase===2;
+  if(step===3&&phase===2)stop();
+}
+function stop(){clearInterval(timer);timer=null;$('play').textContent='▶ 自動播放'}
+function next(){if(phase<2)phase++;else if(step<3){step++;phase=0}render()}
+function prev(){if(phase>0)phase--;else if(step>0){step--;phase=2}render()}
+function play(){
+  if(timer){stop();return}
+  if(step===3&&phase===2){step=phase=0;render()}
+  timer=setInterval(next,4500);$('play').textContent='⏸ 暫停播放';
+}
+function setMode(mobile){
+  document.body.classList.toggle('mobile',mobile);
+  $('mode').textContent=mobile?'投影版':'手機版';
+  $('fullscreen').hidden=mobile;
+}
+$('steps').onclick=e=>{
+  const b=e.target.closest('[data-step]');
+  if(b){stop();step=Number(b.dataset.step);phase=0;render()}
+};
+$('phases').onclick=e=>{
+  const b=e.target.closest('[data-phase]');
+  if(b){stop();phase=Number(b.dataset.phase);render()}
+};
+$('next').onclick=()=>{stop();next()};
+$('prev').onclick=()=>{stop();prev()};
+$('play').onclick=play;
+$('reset').onclick=()=>{stop();step=phase=0;render()};
+$('mode').onclick=()=>setMode(!document.body.classList.contains('mobile'));
+$('fullscreen').onclick=async()=>{
+  try{
+    if(!document.fullscreenElement)await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch(e){$('fullscreen').textContent='請用瀏覽器全螢幕'}
+};
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea,select')||e.altKey||e.ctrlKey||e.metaKey)return;
+  if(e.key==='ArrowRight'||e.key==='Enter'){
+    e.preventDefault();stop();next();
+  }else if(e.key==='ArrowLeft'){
+    e.preventDefault();stop();prev();
+  }else if(e.code==='Space'){
+    e.preventDefault();play();
+  }else if(/^[1-4]$/.test(e.key)){
+    stop();step=Number(e.key)-1;phase=0;render();
+  }
+});
+setMode(window.innerWidth<760);
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第2題｜摺繩動態解題</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --navy: #123d5a;
+      --blue: #176fa4;
+      --light-blue: #e9f6fd;
+      --gold: #d4a52e;
+      --orange: #ef7b32;
+      --red: #d9433a;
+      --green: #208269;
+      --purple: #7052af;
+      --ink: #17354b;
+      --muted: #587386;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      padding: 1.4vh 1.2vw;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top right, #fff2c4, transparent 30%),
+        linear-gradient(135deg, #e8f5fd, #f9fcff 58%, #fff9e9);
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: 9vh 1fr 9vh;
+      gap: 1.2vh;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 頂端標題 */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.1vw;
+      border: 1px solid #c9dfea;
+      border-radius: 1.1vw;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 .4vh 1.4vh rgba(27, 67, 94, .1);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--navy);
+      font-size: clamp(25px, 2.35vw, 45px);
+      white-space: nowrap;
+    }
+
+    .given {
+      display: flex;
+      gap: .7vw;
+      align-items: center;
+    }
+
+    .pill {
+      padding: .8vh .9vw;
+      border-radius: 999px;
+      color: #15567c;
+      background: #e2f3fd;
+      font-size: clamp(17px, 1.35vw, 27px);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .pill.r {
+      color: #704c00;
+      background: #ffedac;
+    }
+
+    /* 中央主要區域 */
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.72fr) minmax(330px, .88fr);
+      gap: 1vw;
+      min-height: 0;
+    }
+
+    .panel {
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid #c9deea;
+      border-radius: 1.1vw;
+      background: rgba(255, 255, 255, .97);
+      box-shadow: 0 .7vh 2vh rgba(26, 66, 94, .13);
+    }
+
+    /* 左側圖形 */
+    .diagram-panel {
+      display: grid;
+      grid-template-rows: 8vh 1fr;
+    }
+
+    .diagram-heading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 1vw;
+      border-bottom: 1px solid #d8e8f0;
+      color: var(--blue);
+      background: #f4fbff;
+      text-align: center;
+      font-size: clamp(21px, 1.65vw, 33px);
+      font-weight: 900;
+    }
+
+    .diagram-wrap {
+      min-height: 0;
+      padding: .5vh .5vw;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .rope {
+      stroke: var(--gold);
+      stroke-width: 18;
+      stroke-linecap: round;
+    }
+
+    .fold-rope {
+      stroke: var(--orange);
+      stroke-width: 15;
+      stroke-linecap: round;
+    }
+
+    .piece-one {
+      stroke: #278abd;
+      stroke-width: 19;
+      stroke-linecap: round;
+    }
+
+    .piece-two {
+      stroke: var(--green);
+      stroke-width: 19;
+      stroke-linecap: round;
+    }
+
+    .piece-three {
+      stroke: var(--purple);
+      stroke-width: 19;
+      stroke-linecap: round;
+    }
+
+    .guide {
+      stroke: #9db5c3;
+      stroke-width: 2;
+      stroke-dasharray: 8 7;
+    }
+
+    .measure {
+      stroke: #6b8290;
+      stroke-width: 2.5;
+    }
+
+    .cut-line {
+      stroke: var(--red);
+      stroke-width: 6;
+      stroke-linecap: round;
+    }
+
+    .point {
+      fill: #153d59;
+    }
+
+    .moving-point {
+      fill: var(--red);
+    }
+
+    .label {
+      fill: #163d58;
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    .moving-label {
+      fill: #ca3e35;
+    }
+
+    .length-box {
+      fill: white;
+      stroke: #b7ccd7;
+      stroke-width: 2;
+    }
+
+    .length-box.blue {
+      fill: #e6f6ff;
+      stroke: #2a89ba;
+    }
+
+    .length-box.gold {
+      fill: #fff3c7;
+      stroke: #d1a129;
+    }
+
+    .length-text {
+      fill: #1a4d6c;
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    .length-text.gold {
+      fill: #725300;
+    }
+
+    .caption {
+      fill: #547083;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .cut-text {
+      fill: var(--red);
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .scissors {
+      transform-origin: 374px 190px;
+      animation: snip .42s ease-in-out infinite alternate;
+    }
+
+    @keyframes snip {
+      from {
+        transform: rotate(-7deg) translateY(-3px);
+      }
+      to {
+        transform: rotate(7deg) translateY(3px);
+      }
+    }
+
+    /* 右側算式 */
+    .formula-panel {
+      display: grid;
+      grid-template-rows: 9vh 1fr auto;
+    }
+
+    .step-title {
+      display: flex;
+      align-items: center;
+      gap: .7vw;
+      padding: 1vh 1.1vw;
+      color: white;
+      background: linear-gradient(110deg, #176fa4, #218a9d);
+    }
+
+    .step-circle {
+      display: grid;
+      flex: 0 0 auto;
+      width: clamp(42px, 3vw, 60px);
+      height: clamp(42px, 3vw, 60px);
+      place-items: center;
+      border-radius: 50%;
+      color: var(--blue);
+      background: white;
+      font-size: clamp(22px, 1.7vw, 34px);
+      font-weight: 900;
+    }
+
+    .step-title-text {
+      font-size: clamp(21px, 1.65vw, 33px);
+      font-weight: 900;
+    }
+
+    .formula-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1.3vh;
+      min-height: 0;
+      padding: 1.6vh 1.25vw;
+    }
+
+    .formula-note {
+      color: var(--muted);
+      font-size: clamp(17px, 1.15vw, 23px);
+      font-weight: 700;
+      line-height: 1.55;
+    }
+
+    .formula {
+      padding: 1.1vh .8vw;
+      border-left: .35vw solid var(--blue);
+      border-radius: .65vw;
+      color: #143c57;
+      background: #edf8fe;
+      font-family: Georgia, "Times New Roman", "Microsoft JhengHei", serif;
+      font-size: clamp(21px, 1.55vw, 31px);
+      font-weight: 900;
+      line-height: 1.4;
+    }
+
+    .formula.gold {
+      border-left-color: #e0a91c;
+      color: #684a00;
+      background: #fff6d6;
+    }
+
+    .formula.green {
+      border-left-color: var(--green);
+      color: #145e4c;
+      background: #e8f8f2;
+    }
+
+    .formula.red {
+      border-left-color: var(--red);
+      color: #92322c;
+      background: #fff0ee;
+    }
+
+    .formula.purple {
+      border-left-color: var(--purple);
+      color: #54378c;
+      background: #f1ecfc;
+    }
+
+    .answer-box {
+      margin: 0 1.15vw 1.4vh;
+      padding: 1.2vh .8vw;
+      border: 3px solid #e6ae23;
+      border-radius: .8vw;
+      color: #654700;
+      background: #fff4c8;
+      text-align: center;
+      font-size: clamp(21px, 1.5vw, 30px);
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    /* 底部操作區 */
+    footer {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 1vw;
+      align-items: center;
+      padding: 0 1vw;
+      border: 1px solid #cadfe9;
+      border-radius: 1vw;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 .4vh 1.3vh rgba(26, 66, 94, .1);
+    }
+
+    .controls {
+      display: flex;
+      gap: .55vw;
+    }
+
+    button {
+      min-width: 7vw;
+      padding: 1vh .85vw;
+      border: 0;
+      border-radius: .65vw;
+      color: white;
+      background: var(--blue);
+      font-family: inherit;
+      font-size: clamp(16px, 1.15vw, 23px);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      color: #24536f;
+      background: #e4f1f8;
+    }
+
+    button.play {
+      background: var(--green);
+    }
+
+    button:hover {
+      filter: brightness(.9);
+    }
+
+    button:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+
+    .step-indicators {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: .45vw;
+    }
+
+    .step-button {
+      min-width: 0;
+      padding: .9vh .25vw;
+      border: 2px solid #d2e1e9;
+      border-radius: .55vw;
+      color: #5e7482;
+      background: #f5f9fb;
+      text-align: center;
+      font-size: clamp(14px, .95vw, 19px);
+      white-space: nowrap;
+    }
+
+    .step-button.active {
+      border-color: var(--blue);
+      color: white;
+      background: var(--blue);
+    }
+
+    .reset {
+      min-width: 5.5vw;
+    }
+
+    @media (max-aspect-ratio: 4/3) {
+      .main-grid {
+        grid-template-columns: 1.5fr 1fr;
+      }
+
+      .given .pill:first-child,
+      .given .pill:nth-child(2) {
+        display: none;
+      }
+
+      .step-button {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header>
+      <h1>第 2 題｜摺繩、剪開、展開</h1>
+
+      <div class="given">
+        <div class="pill">OA：AP＝1：4</div>
+        <div class="pill">OB：BP＝3：7</div>
+        <div class="pill r">設 OP＝10r</div>
+      </div>
+    </header>
+
+    <section class="main-grid">
+      <!-- 左側：動態圖 -->
+      <div class="panel diagram-panel">
+        <div id="diagramHeading" class="diagram-heading">
+          先由比例求出各段長度
+        </div>
+
+        <div class="diagram-wrap">
+          <svg viewBox="0 0 900 510" role="img" aria-label="摺繩動態解題圖">
+            <!-- 背景參考線 -->
+            <line class="guide" x1="75" y1="260" x2="825" y2="260" />
+
+            <!-- 原始直繩 -->
+            <g id="straightRope">
+              <line class="rope" x1="75" y1="260" x2="300" y2="260" />
+              <line class="rope" x1="300" y1="260" x2="825" y2="260" />
+            </g>
+
+            <!-- 摺疊的 OB -->
+            <g id="foldGroup" class="hidden">
+              <line id="foldOA" class="fold-rope"
+                    x1="75" y1="260" x2="225" y2="260" />
+              <line id="foldAB" class="fold-rope"
+                    x1="225" y1="260" x2="300" y2="260" />
+
+              <circle id="movingO" class="moving-point" cx="75" cy="260" r="8" />
+              <circle id="movingA" class="moving-point" cx="225" cy="260" r="8" />
+
+              <text id="movingOLabel" class="label moving-label"
+                    x="75" y="305" text-anchor="middle">O</text>
+              <text id="movingALabel" class="label moving-label"
+                    x="225" y="225" text-anchor="middle">A</text>
+            </g>
+
+            <!-- 原繩上的固定點 -->
+            <g id="fixedPoints">
+              <circle id="pointO" class="point" cx="75" cy="260" r="8" />
+              <circle id="pointA" class="point" cx="225" cy="260" r="8" />
+              <circle id="pointB" class="point" cx="300" cy="260" r="8" />
+              <circle id="pointAprime" class="moving-point hidden"
+                      cx="375" cy="260" r="8" />
+              <circle id="pointP" class="point" cx="825" cy="260" r="8" />
+
+              <text id="labelO" class="label"
+                    x="75" y="307" text-anchor="middle">O</text>
+              <text id="labelA" class="label"
+                    x="225" y="225" text-anchor="middle">A</text>
+              <text id="labelB" class="label"
+                    x="300" y="307" text-anchor="middle">B</text>
+              <text id="labelAprime" class="label moving-label hidden"
+                    x="375" y="307" text-anchor="middle">A′</text>
+              <text id="labelP" class="label"
+                    x="825" y="307" text-anchor="middle">P</text>
+            </g>
+
+            <!-- 題目要求的 2r、8r 大型標示 -->
+            <g id="mainMeasurements">
+              <!-- OA = 2r -->
+              <line class="measure" x1="75" y1="160" x2="225" y2="160" />
+              <line class="measure" x1="75" y1="148" x2="75" y2="172" />
+              <line class="measure" x1="225" y1="148" x2="225" y2="172" />
+              <rect class="length-box blue"
+                    x="101" y="104" width="98" height="45" rx="12" />
+              <text class="length-text"
+                    x="150" y="136" text-anchor="middle">2r</text>
+              <text class="caption"
+                    x="150" y="191" text-anchor="middle">OA</text>
+
+              <!-- AP = 8r -->
+              <line class="measure" x1="225" y1="390" x2="825" y2="390" />
+              <line class="measure" x1="225" y1="378" x2="225" y2="402" />
+              <line class="measure" x1="825" y1="378" x2="825" y2="402" />
+              <rect class="length-box gold"
+                    x="475" y="409" width="100" height="47" rx="12" />
+              <text class="length-text gold"
+                    x="525" y="442" text-anchor="middle">8r</text>
+              <text class="caption"
+                    x="525" y="484" text-anchor="middle">AP</text>
+            </g>
+
+            <!-- OB、BP 標示 -->
+            <g id="secondaryMeasurements">
+              <rect class="length-box"
+                    x="210" y="320" width="92" height="43" rx="11" />
+              <text class="length-text"
+                    x="256" y="350" text-anchor="middle">3r</text>
+
+              <rect class="length-box"
+                    x="515" y="320" width="92" height="43" rx="11" />
+              <text class="length-text"
+                    x="561" y="350" text-anchor="middle">7r</text>
+
+              <text class="caption"
+                    x="255" y="384" text-anchor="middle">OB</text>
+              <text class="caption"
+                    x="561" y="384" text-anchor="middle">BP</text>
+            </g>
+
+            <!-- 剪刀 -->
+            <g id="cutGroup" class="hidden">
+              <line class="cut-line" x1="375" y1="220" x2="375" y2="302" />
+
+              <g class="scissors">
+                <circle cx="345" cy="176" r="14"
+                        fill="none" stroke="#d9433a" stroke-width="6" />
+                <circle cx="373" cy="176" r="14"
+                        fill="none" stroke="#d9433a" stroke-width="6" />
+                <line x1="355" y1="187" x2="392" y2="231"
+                      stroke="#4f5960" stroke-width="7"
+                      stroke-linecap="round" />
+                <line x1="365" y1="187" x2="376" y2="233"
+                      stroke="#4f5960" stroke-width="7"
+                      stroke-linecap="round" />
+              </g>
+
+              <text class="cut-text"
+                    x="465" y="183" text-anchor="middle">
+                在重合處剪開
+              </text>
+            </g>
+
+            <!-- 展開後的兩個切口 -->
+            <g id="twoCuts" class="hidden">
+              <line class="cut-line" x1="225" y1="216" x2="225" y2="303" />
+              <line class="cut-line" x1="375" y1="216" x2="375" y2="303" />
+
+              <text class="cut-text"
+                    x="225" y="191" text-anchor="middle">切口 A</text>
+              <text class="cut-text"
+                    x="375" y="191" text-anchor="middle">切口 A′</text>
+            </g>
+
+            <!-- 最後分離的三段 -->
+            <g id="piecesGroup" class="hidden">
+              <!-- OA -->
+              <line class="piece-one" x1="85" y1="135" x2="235" y2="135" />
+              <circle class="point" cx="85" cy="135" r="7" />
+              <circle class="point" cx="235" cy="135" r="7" />
+              <text class="label" x="85" y="102" text-anchor="middle">O</text>
+              <text class="label" x="235" y="102" text-anchor="middle">A</text>
+              <rect class="length-box blue"
+                    x="110" y="166" width="100" height="48" rx="12" />
+              <text class="length-text"
+                    x="160" y="199" text-anchor="middle">2r</text>
+
+              <!-- AA' -->
+              <line class="piece-two" x1="315" y1="260" x2="465" y2="260" />
+              <circle class="point" cx="315" cy="260" r="7" />
+              <circle class="point" cx="390" cy="260" r="7" />
+              <circle class="point" cx="465" cy="260" r="7" />
+              <text class="label" x="315" y="225" text-anchor="middle">A</text>
+              <text class="label" x="390" y="307" text-anchor="middle">B</text>
+              <text class="label" x="465" y="225" text-anchor="middle">A′</text>
+              <rect x="340" y="329" width="100" height="48" rx="12"
+                    fill="#e6f8f1" stroke="#208269" stroke-width="2" />
+              <text x="390" y="362" text-anchor="middle"
+                    style="fill:#176451;font-size:25px;font-weight:900">2r</text>
+
+              <!-- A'P -->
+              <line class="piece-three" x1="535" y1="385" x2="835" y2="385" />
+              <circle class="point" cx="535" cy="385" r="7" />
+              <circle class="point" cx="835" cy="385" r="7" />
+              <text class="label" x="535" y="348" text-anchor="middle">A′</text>
+              <text class="label" x="835" y="348" text-anchor="middle">P</text>
+              <rect x="635" y="416" width="100" height="48" rx="12"
+                    fill="#f1ecfc" stroke="#7052af" stroke-width="2" />
+              <text x="685" y="449" text-anchor="middle"
+                    style="fill:#5c3d93;font-size:25px;font-weight:900">6r</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 右側：同步算式 -->
+      <aside class="panel formula-panel">
+        <div class="step-title">
+          <div id="stepCircle" class="step-circle">1</div>
+          <div id="stepTitle" class="step-title-text">設定整條繩長</div>
+        </div>
+
+        <div id="formulaContent" class="formula-content"></div>
+
+        <div id="answerBox" class="answer-box hidden">
+          OA：AA′：A′P<br />
+          ＝2r：2r：6r<br />
+          ＝1：1：3　答案（C）
+        </div>
+      </aside>
+    </section>
+
+    <!-- 底部操作列 -->
+    <footer>
+      <div class="controls">
+        <button id="prevButton" class="secondary">← 上一步</button>
+        <button id="playButton" class="play">▶ 播放</button>
+        <button id="nextButton">下一步 →</button>
+      </div>
+
+      <div class="step-indicators">
+        <button class="step-button active" data-step="0">1 設長度</button>
+        <button class="step-button" data-step="1">2 求位置</button>
+        <button class="step-button" data-step="2">3 摺疊</button>
+        <button class="step-button" data-step="3">4 剪開</button>
+        <button class="step-button" data-step="4">5 展開</button>
+        <button class="step-button" data-step="5">6 三段</button>
+      </div>
+
+      <button id="resetButton" class="secondary reset">↺ 重來</button>
+    </footer>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    const straightRope = $("straightRope");
+    const foldGroup = $("foldGroup");
+    const fixedPoints = $("fixedPoints");
+    const mainMeasurements = $("mainMeasurements");
+    const secondaryMeasurements = $("secondaryMeasurements");
+    const cutGroup = $("cutGroup");
+    const twoCuts = $("twoCuts");
+    const piecesGroup = $("piecesGroup");
+
+    const foldOA = $("foldOA");
+    const foldAB = $("foldAB");
+    const movingO = $("movingO");
+    const movingA = $("movingA");
+    const movingOLabel = $("movingOLabel");
+    const movingALabel = $("movingALabel");
+
+    const pointO = $("pointO");
+    const pointA = $("pointA");
+    const pointB = $("pointB");
+    const pointAprime = $("pointAprime");
+    const pointP = $("pointP");
+
+    const labelO = $("labelO");
+    const labelA = $("labelA");
+    const labelB = $("labelB");
+    const labelAprime = $("labelAprime");
+    const labelP = $("labelP");
+
+    const diagramHeading = $("diagramHeading");
+    const stepCircle = $("stepCircle");
+    const stepTitle = $("stepTitle");
+    const formulaContent = $("formulaContent");
+    const answerBox = $("answerBox");
+
+    const prevButton = $("prevButton");
+    const playButton = $("playButton");
+    const nextButton = $("nextButton");
+    const resetButton = $("resetButton");
+    const stepButtons = [...document.querySelectorAll(".step-button")];
+
+    const B = { x: 300, y: 260 };
+    const originalO = { x: 75, y: 260 };
+    const originalA = { x: 225, y: 260 };
+
+    let currentStep = 0;
+    let playing = false;
+    let timer = null;
+    let animationFrame = null;
+
+    const steps = [
+      {
+        title: "設定整條繩長",
+        heading: "先看 OB：BP＝3：7",
+        formulas: [
+          ["note", "比例總份數：3＋7＝10"],
+          ["formula", "設 OP＝10r"],
+          ["formula gold", "OB＝3r"],
+          ["formula gold", "BP＝7r"]
+        ]
+      },
+      {
+        title: "求出 OA、AP",
+        heading: "圖上直接標示 OA＝2r、AP＝8r",
+        formulas: [
+          ["note", "因為 OA：AP＝1：4，共有 5 份"],
+          ["formula", "10r ÷ 5＝2r"],
+          ["formula green", "OA＝1×2r＝2r"],
+          ["formula gold", "AP＝4×2r＝8r"],
+          ["formula", "AB＝3r－2r＝r"]
+        ]
+      },
+      {
+        title: "將 OB 摺向 BP",
+        heading: "以 B 為摺點，A 移到 A′",
+        formulas: [
+          ["note", "摺疊前後，A 到摺點 B 的距離相同。"],
+          ["formula red", "BA′＝BA"],
+          ["formula", "BA＝OB－OA"],
+          ["formula", "BA＝3r－2r＝r"],
+          ["formula green", "所以 BA′＝r"]
+        ]
+      },
+      {
+        title: "在重合處剪開",
+        heading: "A 與 A′ 重合，一刀剪開上下兩層",
+        formulas: [
+          ["note", "摺疊後，橘色繩上的 A 壓在原繩的 A′ 上。"],
+          ["formula red", "A 與 A′ 位置重合"],
+          ["formula", "一刀同時剪到兩層"],
+          ["formula gold", "展開後形成兩個切口"]
+        ]
+      },
+      {
+        title: "把繩子展開",
+        heading: "展開後，切口回到 A 與 A′",
+        formulas: [
+          ["note", "原來重合的兩個切口現在分開。"],
+          ["formula red", "第一個切口：A"],
+          ["formula red", "第二個切口：A′"],
+          ["formula green", "繩子分成 OA、AA′、A′P"]
+        ]
+      },
+      {
+        title: "計算三段繩長",
+        heading: "剪開後，三段繩子分別移開",
+        formulas: [
+          ["formula", "OA＝2r"],
+          ["formula green", "AA′＝AB＋BA′＝r＋r＝2r"],
+          ["formula purple", "A′P＝BP－BA′＝7r－r＝6r"]
+        ]
+      }
+    ];
+
+    function show(element, visible) {
+      element.classList.toggle("hidden", !visible);
+    }
+
+    function rotate(point, degrees) {
+      const radians = -degrees * Math.PI / 180;
+      const dx = point.x - B.x;
+      const dy = point.y - B.y;
+
+      return {
+        x: B.x + dx * Math.cos(radians) - dy * Math.sin(radians),
+        y: B.y + dx * Math.sin(radians) + dy * Math.cos(radians)
+      };
+    }
+
+    function setFoldAngle(angle) {
+      const O = rotate(originalO, angle);
+      const A = rotate(originalA, angle);
+
+      foldOA.setAttribute("x1", O.x);
+      foldOA.setAttribute("y1", O.y);
+      foldOA.setAttribute("x2", A.x);
+      foldOA.setAttribute("y2", A.y);
+
+      foldAB.setAttribute("x1", A.x);
+      foldAB.setAttribute("y1", A.y);
+      foldAB.setAttribute("x2", B.x);
+      foldAB.setAttribute("y2", B.y);
+
+      movingO.setAttribute("cx", O.x);
+      movingO.setAttribute("cy", O.y);
+      movingA.setAttribute("cx", A.x);
+      movingA.setAttribute("cy", A.y);
+
+      movingOLabel.setAttribute("x", O.x);
+      movingOLabel.setAttribute("y", O.y + 43);
+
+      movingALabel.setAttribute("x", A.x);
+      movingALabel.setAttribute("y", A.y - 30);
+    }
+
+    function animateFold(from, to, duration, callback) {
+      cancelAnimationFrame(animationFrame);
+      const start = performance.now();
+
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = progress < .5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+        setFoldAngle(from + (to - from) * eased);
+
+        if (progress < 1) {
+          animationFrame = requestAnimationFrame(tick);
+        } else if (callback) {
+          callback();
+        }
+      }
+
+      animationFrame = requestAnimationFrame(tick);
+    }
+
+    function resetVisuals() {
+      cancelAnimationFrame(animationFrame);
+
+      show(straightRope, true);
+      show(foldGroup, false);
+      show(fixedPoints, true);
+      show(mainMeasurements, true);
+      show(secondaryMeasurements, true);
+      show(cutGroup, false);
+      show(twoCuts, false);
+      show(piecesGroup, false);
+      show(answerBox, false);
+
+      show(pointO, true);
+      show(pointA, true);
+      show(pointB, true);
+      show(pointAprime, false);
+      show(pointP, true);
+
+      show(labelO, true);
+      show(labelA, true);
+      show(labelB, true);
+      show(labelAprime, false);
+      show(labelP, true);
+
+      setFoldAngle(0);
+    }
+
+    function setOriginalPointsVisible(visible) {
+      show(pointO, visible);
+      show(pointA, visible);
+      show(labelO, visible);
+      show(labelA, visible);
+    }
+
+    function buildFormulaContent(items) {
+      formulaContent.innerHTML = "";
+
+      items.forEach(([className, text]) => {
+        const div = document.createElement("div");
+
+        if (className === "note") {
+          div.className = "formula-note";
+        } else {
+          div.className = className;
+        }
+
+        div.textContent = text;
+        formulaContent.appendChild(div);
+      });
+    }
+
+    function renderStep(step, animate = true) {
+      currentStep = step;
+      resetVisuals();
+
+      const data = steps[step];
+
+      stepCircle.textContent = step + 1;
+      stepTitle.textContent = data.title;
+      diagramHeading.textContent = data.heading;
+      buildFormulaContent(data.formulas);
+
+      stepButtons.forEach((button, index) => {
+        button.classList.toggle("active", index === step);
+      });
+
+      prevButton.disabled = step === 0;
+      nextButton.disabled = step === steps.length - 1;
+
+      if (step === 0) {
+        show(pointA, false);
+        show(labelA, false);
+        show(mainMeasurements, false);
+      }
+
+      if (step === 1) {
+        show(mainMeasurements, true);
+        show(secondaryMeasurements, true);
+      }
+
+      if (step === 2) {
+        show(foldGroup, true);
+        show(mainMeasurements, false);
+        show(secondaryMeasurements, false);
+        show(pointAprime, true);
+        show(labelAprime, true);
+        setOriginalPointsVisible(false);
+
+        if (animate) {
+          setFoldAngle(0);
+          animateFold(0, 180, 1300);
+        } else {
+          setFoldAngle(180);
+        }
+      }
+
+      if (step === 3) {
+        show(foldGroup, true);
+        show(mainMeasurements, false);
+        show(secondaryMeasurements, false);
+        show(pointAprime, true);
+        show(labelAprime, true);
+        show(cutGroup, true);
+        setOriginalPointsVisible(false);
+        setFoldAngle(180);
+
+        movingALabel.textContent = "A";
+        labelAprime.textContent = "A′";
+      }
+
+      if (step === 4) {
+        show(foldGroup, true);
+        show(mainMeasurements, false);
+        show(secondaryMeasurements, false);
+        show(pointAprime, true);
+        show(labelAprime, true);
+        setOriginalPointsVisible(false);
+
+        if (animate) {
+          setFoldAngle(180);
+
+          animateFold(180, 0, 1300, () => {
+            show(foldGroup, false);
+            setOriginalPointsVisible(true);
+            show(twoCuts, true);
+          });
+        } else {
+          show(foldGroup, false);
+          setOriginalPointsVisible(true);
+          show(twoCuts, true);
+        }
+      }
+
+      if (step === 5) {
+        show(straightRope, false);
+        show(foldGroup, false);
+        show(fixedPoints, false);
+        show(mainMeasurements, false);
+        show(secondaryMeasurements, false);
+        show(twoCuts, false);
+        show(piecesGroup, true);
+        show(answerBox, true);
+      }
+    }
+
+    function stopPlayback() {
+      playing = false;
+      clearTimeout(timer);
+      playButton.textContent = "▶ 播放";
+    }
+
+    function scheduleNext() {
+      if (!playing) return;
+
+      if (currentStep >= steps.length - 1) {
+        stopPlayback();
+        return;
+      }
+
+      const delay =
+        currentStep === 1 || currentStep === 3 ? 2800 : 3300;
+
+      timer = setTimeout(() => {
+        renderStep(currentStep + 1, true);
+        scheduleNext();
+      }, delay);
+    }
+
+    prevButton.addEventListener("click", () => {
+      stopPlayback();
+
+      if (currentStep > 0) {
+        renderStep(currentStep - 1, true);
+      }
+    });
+
+    nextButton.addEventListener("click", () => {
+      stopPlayback();
+
+      if (currentStep < steps.length - 1) {
+        renderStep(currentStep + 1, true);
+      }
+    });
+
+    playButton.addEventListener("click", () => {
+      if (playing) {
+        stopPlayback();
+        return;
+      }
+
+      if (currentStep === steps.length - 1) {
+        renderStep(0, false);
+      }
+
+      playing = true;
+      playButton.textContent = "Ⅱ 暫停";
+      scheduleNext();
+    });
+
+    resetButton.addEventListener("click", () => {
+      stopPlayback();
+      renderStep(0, false);
+    });
+
+    stepButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        stopPlayback();
+        renderStep(Number(button.dataset.step), true);
+      });
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        nextButton.click();
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        prevButton.click();
+      }
+
+      if (event.code === "Space") {
+        event.preventDefault();
+        playButton.click();
+      }
+
+      if (event.key === "Home") {
+        event.preventDefault();
+        resetButton.click();
+      }
+    });
+
+    renderStep(0, false);
+  </script>
+</body>
+</html>
