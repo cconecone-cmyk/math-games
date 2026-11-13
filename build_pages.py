@@ -157,6 +157,20 @@ LAB_ITEMS = [
         "primary_text": "👁️ 啟動動態解題 (新分頁)",
         "can_preview": True,
     },
+    {
+        "id": "circle-rect-intersection",
+        "title": "圓與長方形的交點動態探討",
+        "subtitle": "點線圓位置關係與段考經典題",
+        "version": "九上幾何",
+        "icon": "🎯",
+        "grade": "9",
+        "banner_class": "card-circle-rect",
+        "tags": ["九上圓的幾何", "相切與割線", "關鍵半徑卡位", "動態自訂題目"],
+        "desc": "段考經典魔王題！長方形內部一點 P 畫圓，動態滑桿調整半徑 r 即時計算與四邊交點數，精準標註相切與過頂點關鍵值，支援自訂題目數字與逐步推導。",
+        "url": "circle-rectangle-intersection.html",
+        "primary_text": "👁️ 啟動動態解題 (新分頁)",
+        "can_preview": True,
+    },
 ]
 
 VIDEOS = [
@@ -805,6 +819,7 @@ def build_html(default_tab="games"):
     .card-speed .banner-overlay {{ background: linear-gradient(135deg, #059669, #047857, #064e3b); }}
     .card-ratio .banner-overlay {{ background: linear-gradient(135deg, #7c3aed, #6d28d9, #4c1d95); }}
     .card-para .banner-overlay {{ background: linear-gradient(135deg, #db2777, #be185d, #831843); }}
+    .card-circle-rect .banner-overlay {{ background: linear-gradient(135deg, #0f766e, #0e7490, #1e3a8a); }}
 
     .card-tool-geo .banner-overlay {{ background: linear-gradient(135deg, #0284c7, #2563eb, #1e3a8a); }}
     .card-tool-pdf .banner-overlay {{ background: linear-gradient(135deg, #059669, #047857, #064e3b); }}

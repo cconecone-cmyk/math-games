@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+  <html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>圓與長方形的交點</title>
+
+    <!-- KaTeX 公式渲染需要網路連線；離線時會顯示文字備援。 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+    <style>
+      :root{
+        color-scheme:dark;
+        --bg1:#070f1f; --bg2:#0f2140;
+        --glass:rgba(255,255,255,.045);
+        --glass2:rgba(255,255,255,.08);
+        --line:rgba(255,255,255,.11);
+        --text:#f4f8ff; --muted:#9fb3c9;
+        --cyan:#4fd8f0; --amber:#ffc857; --mint:#6ff0b4; --coral:#ff4d6d;
+        --radius:18px;
+      }
+      *{box-sizing:border-box}
+      html,body{margin:0}
+      body{
+        min-height:100vh;
+        color:var(--text);
+        font-family:"SF Pro Display",system-ui,-apple-system,"Noto Sans TC","PingFang TC",sans-serif;
+        background:
+          radial-gradient(900px 500px at 12% -10%,rgba(79,216,240,.16),transparent 60%),
+          radial-gradient(800px 500px at 100% 0%,rgba(255,200,87,.10),transparent 55%),
+          linear-gradient(160deg,var(--bg2),var(--bg1) 70%);
+        background-attachment:fixed;
+      }
+      button,input{font:inherit}
+      button{
+        cursor:pointer;color:var(--text);
+        background:var(--glass2);border:1px solid var(--line);
+        border-radius:12px;padding:8px 14px;font-weight:700;
+        transition:.18s ease;white-space:nowrap;
+      }
+      button:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+      button:active{transform:translateY(0)}
+      button:disabled{opacity:.35;cursor:not-allowed;transform:none}
+      button.primary{
+        background:linear-gradient(135deg,#12a8b8,#0a7f9a);
+        border-color:rgba(120,235,245,.55);
+        box-shadow:0 6px 18px rgba(18,168,184,.28);
+      }
+      button.on{
+        color:#1a2338;background:linear-gradient(135deg,#ffd978,#ffbf3f);
+        border-color:transparent;box-shadow:0 5px 16px rgba(255,200,87,.28);
+      }
+      button.on .formula,button.on .katex{color:#1a2338}
+
+      .app{max-width:1720px;margin:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+
+      .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+      .brand{display:flex;align-items:center;gap:11px}
+      .logo{
+        width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
+        background:linear-gradient(135deg,rgba(79,216,240,.28),rgba(255,200,87,.25));
+        border:1px solid var(--line);
+      }
+      h1{margin:0;font-size:clamp(21px,2.1vw,30px);letter-spacing:.02em;white-space:nowrap}
+      .seg{display:flex;padding:4px;gap:4px;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid var(--line)}
+      .seg button{background:transparent;border:0;padding:8px 16px;border-radius:10px;color:var(--muted)}
+      .seg button[aria-selected="true"]{
+        color:#0b1a2c;background:linear-gradient(135deg,#7cecf8,#3fc9e0);
+        box-shadow:0 4px 14px rgba(79,216,240,.3);transform:none;
+      }
+      .spacer{flex:1}
+
+      .problem{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+      .tag{
+        padding:4px 13px;border-radius:999px;font-size:clamp(14px,1.1vw,17px);
+        background:var(--glass);border:1px solid var(--line);color:#dce8f6;
+      }
+      .tag.kind{background:rgba(255,200,87,.14);border-color:rgba(255,200,87,.4);color:var(--amber);font-weight:800;padding:6px 13px}
+      .tag .formula{color:#e8f2ff}
+
+      .settings{padding:12px 14px;border-radius:var(--radius);background:var(--glass);border:1px solid var(--line)}
+      .settings-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+      .settings label{display:flex;flex-direction:column;gap:4px;width:118px;font-size:13px;color:var(--muted)}
+      input[type=number]{
+        width:100%;min-width:0;color:#fff;font-weight:700;font-size:17px;
+        background:rgba(0,0,0,.32);border:1px solid var(--line);
+        border-radius:10px;padding:8px 10px;outline:none;
+      }
+      input[type=number]:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(79,216,240,.18)}
+      .msg{margin:8px 0 0;font-size:13px;color:var(--muted)}
+
+      .stage{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(350px,.85fr);gap:12px;align-items:stretch}
+      .panel{
+        background:var(--glass);border:1px solid var(--line);border-radius:var(--radius);
+        padding:12px;min-width:0;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      }
+      .visual{display:flex;flex-direction:column;gap:10px;min-height:0}
+
+      .board{
+        position:relative;height:clamp(430px,68vh,800px);border-radius:14px;overflow:hidden;
+        background:radial-gradient(circle at 50% 40%,#10294a 0%,#08152a 75%);
+        border:1px solid var(--line);box-shadow:inset 0 0 60px rgba(0,0,0,.35);
+      }
+      #diagram{width:100%;height:100%;display:block}
+      .olay{position:absolute;inset:0;pointer-events:none;z-index:1}
+      .olabel{
+        position:absolute;transform:translate(-50%,-50%);white-space:nowrap;
+        padding:1px 9px;border-radius:999px;color:#ffc2cc;
+        background:rgba(8,21,42,.84);border:1px solid rgba(255,77,109,.35);
+        transition:font-size .15s;
+      }
+      .olabel .formula{color:inherit}
+      .olabel.hot{
+        color:#fff;background:rgba(255,77,109,.32);border-color:var(--coral);
+        box-shadow:0 0 18px rgba(255,77,109,.6);font-weight:800;z-index:2;
+      }
+
+      .hud{position:absolute;z-index:3}
+      .hud.tl{top:12px;left:12px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;max-width:calc(100% - 150px)}
+      .hud.tr{top:12px;right:12px}
+      .hud.bl{bottom:12px;left:12px}
+
+      .count{
+        display:flex;align-items:baseline;gap:8px;padding:8px 16px 8px 14px;border-radius:16px;
+        background:rgba(8,18,34,.72);border:1px solid rgba(255,77,109,.5);
+        box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 24px rgba(255,77,109,.18);
+        backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+      }
+      .count span{font-size:14px;color:var(--muted);font-weight:700}
+      .count strong{font-size:clamp(34px,4vw,54px);line-height:1;color:#fff;text-shadow:0 0 18px rgba(255,77,109,.7)}
+      .count small{font-size:16px;color:var(--muted)}
+
+      .keybadge{
+        padding:7px 13px;border-radius:13px;font-size:clamp(14px,1.2vw,18px);line-height:1.5;
+        background:rgba(255,200,87,.2);border:1px solid var(--amber);color:#fff;
+        box-shadow:0 0 22px rgba(255,200,87,.35);animation:pop .22s ease;
+      }
+      .keybadge .formula{color:var(--amber);font-size:1.15em}
+      .keybadge b{color:var(--amber)}
+      @keyframes pop{from{transform:scale(.88);opacity:.3}to{transform:scale(1);opacity:1}}
+
+      .viewseg{
+        display:flex;gap:3px;padding:3px;border-radius:12px;
+        background:rgba(8,18,34,.72);border:1px solid var(--line);
+        backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+      }
+      .viewseg button{background:transparent;border:0;padding:6px 11px;font-size:13px;color:var(--muted);border-radius:9px}
+      .viewseg button.on{color:#1a2338}
+
+      .legend{
+        display:flex;gap:11px;padding:6px 12px;border-radius:11px;font-size:13px;color:var(--muted);
+        background:rgba(8,18,34,.68);border:1px solid var(--line);
+      }
+      .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+
+      .edges{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+      .edge{
+        text-align:center;padding:5px 4px;border-radius:12px;
+        background:rgba(0,0,0,.26);border:1px solid var(--line);color:var(--muted);font-weight:700;
+      }
+      .edge .formula{color:inherit}
+      .edge b{display:block;font-size:22px;color:#fff;line-height:1.15}
+      .edge.cur{border-color:var(--amber);background:rgba(255,200,87,.12);color:var(--amber)}
+      .edge.cur b{color:var(--amber)}
+
+      .controls{display:flex;flex-direction:column;gap:12px;min-width:0}
+      .sec{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:15px;color:var(--muted);font-weight:800;letter-spacing:.06em}
+      .sec i{
+        font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+        font-size:12px;color:#10213a;background:var(--cyan);
+      }
+      .rvalue{display:flex;align-items:center;gap:12px}
+      .track{position:relative;flex:1;min-width:0;height:44px;display:flex;align-items:flex-start;padding-top:6px}
+      .ticks{position:absolute;left:0;right:0;top:30px;height:12px;pointer-events:none}
+      .tick{position:absolute;width:3px;height:12px;border-radius:2px;margin-left:-1.5px;background:var(--cyan)}
+      .tick.c{background:var(--coral)}
+      .rbox{
+        display:flex;align-items:baseline;gap:5px;padding:5px 12px;border-radius:13px;
+        background:rgba(255,200,87,.12);border:1px solid rgba(255,200,87,.4);
+      }
+      .rbox em{font-style:normal;color:var(--amber);font-weight:800}
+      .rbox input{width:76px;background:transparent;border:0;padding:0;color:var(--amber);font-size:26px;font-weight:800;box-shadow:none}
+      .rbox input:focus{box-shadow:none}
+
+      input[type=range]{
+        -webkit-appearance:none;appearance:none;width:100%;min-width:0;height:8px;border-radius:99px;outline:none;margin:6px 0 0;
+        background:linear-gradient(90deg,var(--amber) var(--p,20%),rgba(255,255,255,.14) var(--p,20%));
+      }
+      input[type=range]::-webkit-slider-thumb{
+        -webkit-appearance:none;width:26px;height:26px;border-radius:50%;
+        background:radial-gradient(circle at 35% 30%,#fff2c2,var(--amber));
+        border:3px solid #fff;box-shadow:0 3px 12px rgba(255,200,87,.6);cursor:grab;
+      }
+      input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--amber);border:3px solid #fff}
+
+      .presets{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}
+      .presets button{padding:7px 0;border-radius:999px}
+
+      .keyhead{display:flex;align-items:center;gap:6px;margin:10px 0 6px;color:var(--muted);font-size:13px}
+      .keyhead span{flex:1}
+      .keyhead button{padding:4px 10px;font-size:13px}
+      .keys{display:flex;flex-wrap:wrap;gap:6px}
+      .chip{
+        display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 10px;border-radius:12px;line-height:1.35;
+      }
+      .chip .formula{color:#fff;font-size:1.02em}
+      .chip small{font-size:12px;color:var(--muted);font-weight:600}
+      .chip small .formula{color:inherit;font-size:1em}
+      .chip.on small{color:#4a3a10}
+      .legend-note{font-size:12px;color:var(--muted);margin:6px 0 0;display:flex;gap:12px;flex-wrap:wrap}
+      .legend-note i{display:inline-block;width:3px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--cyan)}
+      .legend-note i.c{background:var(--coral)}
+
+      .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+      .steps button{
+        padding:6px 2px;font-size:13px;border-radius:11px;line-height:1.25;
+        display:flex;flex-direction:column;align-items:center;gap:1px;
+      }
+      .steps button small{font-size:11px;opacity:.65}
+      .steps .formula{color:inherit}
+      .steps .katex{font-size:1em}
+      .nav{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:6px;margin-top:8px}
+
+      .explain{
+        padding:11px 14px;border-radius:14px;min-height:96px;overflow:auto;
+        background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+        border:1px solid var(--line);border-left:4px solid var(--amber);
+        line-height:1.65;font-size:16px;
+      }
+      .explain h3{margin:0 0 4px;color:var(--amber);font-size:18px}
+      .explain p{margin:4px 0}
+      .result{color:var(--mint);font-weight:800}
+      .formula{color:#c6f3ff;font-weight:700}
+      .mlist{display:flex;flex-wrap:wrap;gap:2px 16px;margin:2px 0 6px}
+      .mlist>span{white-space:nowrap}
+      .note{font-size:12px;color:var(--muted);margin:4px 0 0}
+
+      .summary{margin-top:auto;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.24);border:1px solid var(--line)}
+      table{width:100%;border-collapse:separate;border-spacing:4px;text-align:center}
+      th,td{padding:5px 2px;border-radius:9px;font-size:15px}
+      thead th{background:rgba(255,255,255,.07);color:var(--muted)}
+      tbody th{color:var(--muted)}
+      tbody td{background:rgba(255,77,109,.1);font-weight:800;font-size:18px}
+      td.sel{background:linear-gradient(135deg,#ffd978,#ffbf3f);color:#1a2338}
+      .table-wrap{overflow-x:auto}
+      .noint{margin:6px 0 0;font-size:15px;line-height:1.7}
+
+      details{margin-top:8px}
+      summary{cursor:pointer;color:var(--amber);font-weight:800;font-size:14px;padding:4px 0}
+      .cells{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}
+      .cell{
+        display:flex;justify-content:space-between;align-items:center;gap:6px;
+        padding:4px 8px;border-radius:10px;font-size:13px;text-align:left;
+        background:rgba(255,255,255,.05);
+      }
+      .cell .formula{color:inherit;font-weight:600}
+      .cell b{font-size:18px;color:var(--coral)}
+      .cell.key{background:rgba(255,200,87,.12);border-color:rgba(255,200,87,.35)}
+      .cell.now{background:linear-gradient(135deg,#ffd978,#ffbf3f);color:#1a2338}
+      .cell.now b{color:#1a2338}
+      [hidden]{display:none!important}
+
+      @media (min-width:901px) and (min-height:600px){
+        html:fullscreen .app,html:-webkit-full-screen .app{max-width:none;height:100vh;height:100dvh;overflow:hidden;padding:10px;gap:8px}
+        html:fullscreen .stage,html:-webkit-full-screen .stage{flex:1;min-height:0}
+        html:fullscreen .board,html:-webkit-full-screen .board{flex:1;height:auto;min-height:0}
+        html:fullscreen .controls,html:-webkit-full-screen .controls{overflow-y:auto;gap:9px}
+      }
+      @media (max-height:760px) and (min-width:901px){
+        .app{gap:7px;padding:8px}.panel{padding:9px}.explain{min-height:70px;font-size:14px;padding:7px 11px}
+        .explain h3{font-size:16px}.sec{margin-bottom:5px}.controls{gap:8px}
+        th,td{padding:2px}.edge b{font-size:18px}.edge{padding:3px}
+      }
+      @media (max-width:900px){
+        .stage{grid-template-columns:1fr}
+        .board{height:clamp(320px,58vh,620px)}
+        .summary{margin-top:0}
+      }
+      @media (max-width:520px){
+        .app{padding:8px;gap:9px}
+        h1{font-size:21px}
+        .top{gap:9px}.brand{flex:1}
+        .seg{width:100%}.seg button{flex:1;padding:8px 6px}
+        .board{height:360px}
+        .legend{display:none}
+        .count strong{font-size:34px}
+        .settings label{width:calc(50% - 5px)}
+        .steps button{font-size:12px}
+        .cells{grid-template-columns:repeat(2,1fr)}
+        .hud.tl{max-width:calc(100% - 110px)}
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="app">
+      <header class="top">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+              <rect x="3" y="6" width="15" height="12" rx="1.5" stroke="#4fd8f0" stroke-width="2"/>
+              <circle cx="14" cy="14" r="8" stroke="#ffc857" stroke-width="2"/>
+              <circle cx="14" cy="14" r="2" fill="#6ff0b4"/>
+            </svg>
+          </div>
+          <h1>圓與長方形的交點</h1>
+        </div>
+        <div class="seg" role="tablist" aria-label="題目分頁">
+          <button id="originalTab" role="tab" aria-selected="true">原題解答</button>
+          <button id="customTab" role="tab" aria-selected="false">修改題目數字</button>
+        </div>
+        <div class="spacer"></div>
+        <button id="fullscreen" aria-label="全螢幕">⛶ 全螢幕</button>
+      </header>
+
+      <section id="settings" class="settings" hidden>
+        <div class="settings-row">
+          <label>長 AD<input id="width" type="number" min="1" max="30" step="0.01" value="8"></label>
+          <label>寬 AB<input id="height" type="number" min="1" max="30" step="0.01" value="6"></label>
+          <label>P 到 AB<input id="px" type="number" min="0.01" step="0.01" value="3"></label>
+          <label>P 到 AD<input id="py" type="number" min="0.01" step="0.01" value="2"></label>
+          <button id="apply" class="primary">套用</button>
+          <button id="resetCustom">恢復原題</button>
+        </div>
+        <p id="settingMessage" class="msg" aria-live="polite">P 須在長方形內；修改不影響原題。</p>
+      </section>
+
+      <div id="problem" class="problem"></div>
+
+      <div class="stage">
+        <section class="panel visual">
+          <div id="board" class="board">
+            <svg id="diagram" role="img" aria-label="長方形、圓與紅色交點示意圖"></svg>
+            <div id="olay" class="olay"></div>
+
+            <div class="hud tl">
+              <div class="count"><span>交點</span><strong id="total">0</strong><small>個</small></div>
+              <div id="keyBadge" class="keybadge" hidden></div>
+            </div>
+            <div class="hud tr">
+              <div class="viewseg">
+                <button id="zoomIn" class="on" aria-pressed="true">放大</button>
+                <button id="zoomOut" aria-pressed="false">完整圓</button>
+              </div>
+            </div>
+            <div class="hud bl">
+              <div class="legend">
+                <span><i class="dot" style="background:#4fd8f0"></i>長方形</span>
+                <span><i class="dot" style="background:#ffc857"></i>圓</span>
+                <span><i class="dot" style="background:#6ff0b4"></i>圓心 P</span>
+                <span><i class="dot" style="background:#ff4d6d"></i>交點</span>
+              </div>
+            </div>
+          </div>
+          <div id="edgeCounts" class="edges"></div>
+        </section>
+
+        <section class="panel controls">
+          <div>
+            <h2 class="sec"><i>1</i>圓的半徑</h2>
+            <div class="rvalue">
+              <div class="track">
+                <input id="slider" type="range" min="0.01" step="0.01" aria-label="調整半徑">
+                <div id="ticks" class="ticks"></div>
+              </div>
+              <div class="rbox"><em>r＝</em><input id="radius" type="number" min="0.01" step="0.01" aria-label="半徑數值"></div>
+            </div>
+            <div class="presets">
+              <button class="preset" data-r="2">2</button>
+              <button class="preset" data-r="3">3</button>
+              <button class="preset" data-r="4">4</button>
+              <button class="preset" data-r="5">5</button>
+              <button class="preset" data-r="6">6</button>
+            </div>
+
+            <div class="keyhead">
+              <span>關鍵值（拖曳拉桿會自動卡住）</span>
+              <button id="prevKey" aria-label="上一個關鍵值">◀</button>
+              <button id="nextKey" aria-label="下一個關鍵值">▶</button>
+            </div>
+            <div id="keys" class="keys"></div>
+            <div class="legend-note">
+              <span><i></i>刻度：圓與某邊相切</span>
+              <span><i class="c"></i>刻度：圓通過頂點</span>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="sec"><i>2</i>逐步解答</h2>
+            <div id="steps" class="steps"></div>
+            <div class="nav">
+              <button id="prev">◀ 上一步</button>
+              <button id="play" class="primary">▶ 自動播放</button>
+              <button id="next">下一步 ▶</button>
+            </div>
+          </div>
+
+          <div id="explain" class="explain" aria-live="polite"></div>
+
+          <div class="summary">
+            <h2 class="sec" style="margin-bottom:4px"><i>3</i>答案整理</h2>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>r</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead>
+                <tbody id="answers"></tbody>
+              </table>
+            </div>
+            <p id="noIntersection" class="noint"></p>
+            <details>
+              <summary>分段整理：各範圍的交點數（點選可跳到該處）</summary>
+              <div id="intervals" class="cells"></div>
+            </details>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      (function(){
+        "use strict";
+
+        // DOM elements
+        const originalTab = document.getElementById("originalTab");
+        const customTab = document.getElementById("customTab");
+        const fullscreenBtn = document.getElementById("fullscreen");
+        const settingsSec = document.getElementById("settings");
+        const widthInput = document.getElementById("width");
+        const heightInput = document.getElementById("height");
+        const pxInput = document.getElementById("px");
+        const pyInput = document.getElementById("py");
+        const applyBtn = document.getElementById("apply");
+        const resetCustomBtn = document.getElementById("resetCustom");
+        const settingMessage = document.getElementById("settingMessage");
+        const problemDiv = document.getElementById("problem");
+        const board = document.getElementById("board");
+        const diagram = document.getElementById("diagram");
+        const olay = document.getElementById("olay");
+        const totalEl = document.getElementById("total");
+        const keyBadge = document.getElementById("keyBadge");
+        const zoomInBtn = document.getElementById("zoomIn");
+        const zoomOutBtn = document.getElementById("zoomOut");
+        const edgeCounts = document.getElementById("edgeCounts");
+        const slider = document.getElementById("slider");
+        const ticksEl = document.getElementById("ticks");
+        const radiusInput = document.getElementById("radius");
+        const presets = document.querySelectorAll(".preset");
+        const prevKeyBtn = document.getElementById("prevKey");
+        const nextKeyBtn = document.getElementById("nextKey");
+        const keysDiv = document.getElementById("keys");
+        const stepsDiv = document.getElementById("steps");
+        const prevBtn = document.getElementById("prev");
+        const playBtn = document.getElementById("play");
+        const nextBtn = document.getElementById("next");
+        const explainDiv = document.getElementById("explain");
+        const answersTbody = document.getElementById("answers");
+        const noIntersectionP = document.getElementById("noIntersection");
+        const intervalsDiv = document.getElementById("intervals");
+
+        // Mathematical State
+        const ORIG_CONFIG = {
+          width: 8,
+          height: 6,
+          px: 3,
+          py: 2
+        };
+
+        let config = { ...ORIG_CONFIG };
+        let currentR = 2.0;
+        let zoomMode = "in"; // "in" or "out"
+        let isPlaying = false;
+        let playTimer = null;
+        let activeStep = 1;
+
+        // KaTeX helper
+        function tex(str, display = false) {
+          if (window.katex) {
+            try {
+              return katex.renderToString(str, { displayMode: display, throwOnError: false });
+            } catch (e) {
+              return str;
+            }
+          }
+          return str;
+        }
+
+        // Format number / square root
+        function fmt(n) {
+          const r = Math.round(n * 100) / 100;
+          return Number.isInteger(r) ? r.toString() : r.toFixed(2);
+        }
+
+        function formatRadical(val, name = "") {
+          const sq = Math.round(val * val);
+          const rootVal = Math.sqrt(sq);
+          if (Math.abs(rootVal - Math.round(rootVal)) < 1e-4) {
+            return `${Math.round(rootVal)}`;
+          }
+          return `\sqrt{${sq}}`;
+        }
+
+        // Calculate critical key values
+        function getKeys() {
+          const W = config.width;
+          const H = config.height;
+          const px = config.px;
+          const py = config.py;
+
+          const dAD = py;           // y = 0
+          const dAB = px;           // x = 0
+          const dBC = H - py;       // y = H
+          const dCD = W - px;       // x = W
+
+          const vA = Math.hypot(px, py);
+          const vB = Math.hypot(px, H - py);
+          const vC = Math.hypot(W - px, H - py);
+          const vD = Math.hypot(W - px, py);
+
+          const list = [
+            { r: dAD, type: "tangent", target: "AD", name: "\overline{AD}", desc: "與邊 AD 相切" },
+            { r: dAB, type: "tangent", target: "AB", name: "\overline{AB}", desc: "與邊 AB 相切" },
+            { r: dBC, type: "tangent", target: "BC", name: "\overline{BC}", desc: "與邊 BC 相切" },
+            { r: dCD, type: "tangent", target: "CD", name: "\overline{CD}", desc: "與邊 CD 相切" },
+            { r: vA, type: "vertex", target: "A", name: "A", desc: "通過頂點 A" },
+            { r: vB, type: "vertex", target: "B", name: "B", desc: "通過頂點 B" },
+            { r: vC, type: "vertex", target: "C", name: "C", desc: "通過頂點 C" },
+            { r: vD, type: "vertex", target: "D", name: "D", desc: "通過頂點 D" }
+          ];
+
+          list.sort((a, b) => a.r - b.r);
+
+          // Group very close keys (e.g. r=5 for CD and B)
+          const merged = [];
+          for (let item of list) {
+            const last = merged[merged.length - 1];
+            if (last && Math.abs(last.r - item.r) < 1e-3) {
+              last.events.push(item);
+              last.desc += " 且 " + item.desc;
+              last.label += " / " + (item.type === "tangent" ? `切 ${item.target}` : `過 ${item.target}`);
+            } else {
+              merged.push({
+                r: item.r,
+                type: item.type,
+                events: [item],
+                desc: item.desc,
+                label: item.type === "tangent" ? `切 ${item.target}` : `過 ${item.target}`,
+                texR: formatRadical(item.r)
+              });
+            }
+          }
+          return merged;
+        }
+
+        // Intersections calculation
+        function calculateIntersections(r) {
+          const W = config.width;
+          const H = config.height;
+          const px = config.px;
+          const py = config.py;
+
+          // Points on each edge
+          const edgePoints = {
+            AD: [], // y = 0, x in [0, W]
+            AB: [], // x = 0, y in [0, H]
+            BC: [], // y = H, x in [0, W]
+            CD: []  // x = W, y in [0, H]
+          };
+
+          // Edge AD: y = 0
+          if (r >= py - 1e-6) {
+            const dx = Math.sqrt(Math.max(0, r * r - py * py));
+            const x1 = px - dx;
+            const x2 = px + dx;
+            if (x1 >= -1e-6 && x1 <= W + 1e-6) edgePoints.AD.push({ x: Math.max(0, Math.min(W, x1)), y: 0 });
+            if (dx > 1e-5 && x2 >= -1e-6 && x2 <= W + 1e-6) edgePoints.AD.push({ x: Math.max(0, Math.min(W, x2)), y: 0 });
+          }
+
+          // Edge AB: x = 0
+          if (r >= px - 1e-6) {
+            const dy = Math.sqrt(Math.max(0, r * r - px * px));
+            const y1 = py - dy;
+            const y2 = py + dy;
+            if (y1 >= -1e-6 && y1 <= H + 1e-6) edgePoints.AB.push({ x: 0, y: Math.max(0, Math.min(H, y1)) });
+            if (dy > 1e-5 && y2 >= -1e-6 && y2 <= H + 1e-6) edgePoints.AB.push({ x: 0, y: Math.max(0, Math.min(H, y2)) });
+          }
+
+          // Edge BC: y = H
+          const dBC = H - py;
+          if (r >= dBC - 1e-6) {
+            const dx = Math.sqrt(Math.max(0, r * r - dBC * dBC));
+            const x1 = px - dx;
+            const x2 = px + dx;
+            if (x1 >= -1e-6 && x1 <= W + 1e-6) edgePoints.BC.push({ x: Math.max(0, Math.min(W, x1)), y: H });
+            if (dx > 1e-5 && x2 >= -1e-6 && x2 <= W + 1e-6) edgePoints.BC.push({ x: Math.max(0, Math.min(W, x2)), y: H });
+          }
+
+          // Edge CD: x = W
+          const dCD = W - px;
+          if (r >= dCD - 1e-6) {
+            const dy = Math.sqrt(Math.max(0, r * r - dCD * dCD));
+            const y1 = py - dy;
+            const y2 = py + dy;
+            if (y1 >= -1e-6 && y1 <= H + 1e-6) edgePoints.CD.push({ x: W, y: Math.max(0, Math.min(H, y1)) });
+            if (dy > 1e-5 && y2 >= -1e-6 && y2 <= H + 1e-6) edgePoints.CD.push({ x: W, y: Math.max(0, Math.min(H, y2)) });
+          }
+
+          // All points combined & deduplicated (for corners)
+          const allPoints = [];
+          for (let edge of ["AD", "AB", "BC", "CD"]) {
+            for (let pt of edgePoints[edge]) {
+              let exists = false;
+              for (let ex of allPoints) {
+                if (Math.hypot(ex.x - pt.x, ex.y - pt.y) < 1e-3) {
+                  exists = true;
+                  break;
+                }
+              }
+              if (!exists) {
+                allPoints.push(pt);
+              }
+            }
+          }
+
+          return {
+            edgeCounts: {
+              AD: edgePoints.AD.length,
+              AB: edgePoints.AB.length,
+              BC: edgePoints.BC.length,
+              CD: edgePoints.CD.length
+            },
+            edgePoints,
+            allPoints,
+            total: allPoints.length
+          };
+        }
+
+        // Render problem tags
+        function renderProblem() {
+          const W = config.width;
+          const H = config.height;
+          const px = config.px;
+          const py = config.py;
+
+          problemDiv.innerHTML = `
+            <span class="tag kind">九上幾何</span>
+            <span class="tag">長方形 <span class="formula">${tex("ABCD")}</span></span>
+            <span class="tag"><span class="formula">${tex(`\overline{AD}＝${W}`)}</span></span>
+            <span class="tag"><span class="formula">${tex(`\overline{AB}＝${H}`)}</span></span>
+            <span class="tag"><span class="formula">${tex("P")}</span> 到 <span class="formula">${tex("\overline{AB}")}</span> 距 <span class="formula">${px}</span></span>
+            <span class="tag"><span class="formula">${tex("P")}</span> 到 <span class="formula">${tex("\overline{AD}")}</span> 距 <span class="formula">${py}</span></span>
+            <span class="tag">探討半徑 <span class="formula">${tex("r")}</span> 與長方形交點數</span>
+          `;
+        }
+
+        // Render Answer table
+        function renderAnswerTable() {
+          const testR = [2, 3, 4, 5, 6];
+          let tr = "<tr>";
+          for (let r of testR) {
+            const res = calculateIntersections(r);
+            const isSel = Math.abs(currentR - r) < 0.05;
+            tr += `<td class="${isSel ? "sel" : ""}" data-r="${r}" style="cursor:pointer">${res.total}</td>`;
+          }
+          tr += "</tr>";
+          answersTbody.innerHTML = tr;
+
+          answersTbody.querySelectorAll("td").forEach(td => {
+            td.addEventListener("click", () => {
+              setRadius(parseFloat(td.dataset.r));
+            });
+          });
+        }
+
+        // Render Intervals list
+        function renderIntervals() {
+          const keys = getKeys();
+          const items = [];
+          const W = config.width;
+          const H = config.height;
+          const maxV = Math.max(
+            Math.hypot(config.px, config.py),
+            Math.hypot(config.px, H - config.py),
+            Math.hypot(W - config.px, config.py),
+            Math.hypot(W - config.px, H - config.py)
+          );
+
+          // 0 < r < k[0].r
+          const mid0 = keys[0].r / 2;
+          const c0 = calculateIntersections(mid0).total;
+          items.push({
+            r: mid0,
+            isKey: false,
+            label: `0 < r < ${tex(keys[0].texR)}`,
+            count: c0,
+            check: r => r > 0.005 && r < keys[0].r - 0.02
+          });
+
+          for (let i = 0; i < keys.length; i++) {
+            const k = keys[i];
+            const countK = calculateIntersections(k.r).total;
+            items.push({
+              r: k.r,
+              isKey: true,
+              label: `r ＝ ${tex(k.texR)}`,
+              count: countK,
+              note: k.label,
+              check: r => Math.abs(r - k.r) <= 0.02
+            });
+
+            const nextR = (i + 1 < keys.length) ? keys[i + 1].r : (maxV + 1.5);
+            if (nextR - k.r > 0.04) {
+              const mid = (k.r + nextR) / 2;
+              const cMid = calculateIntersections(mid).total;
+              if (i + 1 < keys.length) {
+                items.push({
+                  r: mid,
+                  isKey: false,
+                  label: `${tex(k.texR)} < r < ${tex(keys[i + 1].texR)}`,
+                  count: cMid,
+                  check: r => r > k.r + 0.02 && r < keys[i + 1].r - 0.02
+                });
+              } else {
+                items.push({
+                  r: mid,
+                  isKey: false,
+                  label: `r > ${tex(k.texR)}`,
+                  count: 0,
+                  check: r => r > k.r + 0.02
+                });
+              }
+            }
+          }
+
+          let html = "";
+          for (let item of items) {
+            const isNow = item.check(currentR);
+            html += `
+              <div class="cell ${item.isKey ? "key" : ""} ${isNow ? "now" : ""}" data-r="${item.r}" style="cursor:pointer" title="${item.note || ""}">
+                <span class="formula">${item.label}</span>
+                <b>${item.count} 個</b>
+              </div>
+            `;
+          }
+          intervalsDiv.innerHTML = html;
+
+          intervalsDiv.querySelectorAll(".cell").forEach(cell => {
+            cell.addEventListener("click", () => {
+              setRadius(parseFloat(cell.dataset.r));
+            });
+          });
+
+          // No intersection explanation text
+          const minK = keys[0];
+          const lastK = keys[keys.length - 1];
+          noIntersectionP.innerHTML = `當半徑 <span class="formula">${tex(`r < ${minK.texR}`)}</span>（圓完全在長方形內）或 <span class="formula">${tex(`r > ${lastK.texR}`)}</span>（長方形完全在圓內）時，圓與長方形四邊之交點數均為 <span class="result">0 個</span>。`;
+        }
+
+        // Render Keys bar & slider ticks
+        function renderKeysAndTicks() {
+          const keys = getKeys();
+          const min = parseFloat(slider.min) || 0.01;
+          const max = parseFloat(slider.max) || 8.5;
+
+          // Keys buttons
+          let keysHtml = "";
+          for (let k of keys) {
+            const isCur = Math.abs(currentR - k.r) < 0.03;
+            keysHtml += `
+              <button class="chip ${isCur ? "on" : ""}" data-r="${k.r}">
+                <span class="formula">${tex(`r ＝ ${k.texR}`)}</span>
+                <small>${k.label}</small>
+              </button>
+            `;
+          }
+          keysDiv.innerHTML = keysHtml;
+
+          keysDiv.querySelectorAll(".chip").forEach(btn => {
+            btn.addEventListener("click", () => {
+              setRadius(parseFloat(btn.dataset.r));
+            });
+          });
+
+          // Slider ticks
+          let ticksHtml = "";
+          for (let k of keys) {
+            const pct = Math.max(0, Math.min(100, ((k.r - min) / (max - min)) * 100));
+            const isV = k.type === "vertex";
+            ticksHtml += `<div class="tick ${isV ? "c" : ""}" style="left:${pct}%;" title="${k.label}"></div>`;
+          }
+          ticksEl.innerHTML = ticksHtml;
+        }
+
+        // Render Steps
+        function renderSteps() {
+          const stepList = [
+            { id: 1, r: 2.0, title: "r＝2", sub: "切 AD" },
+            { id: 2, r: 3.0, title: "r＝3", sub: "切 AB" },
+            { id: 3, r: 4.0, title: "r＝4", sub: "切 BC" },
+            { id: 4, r: 5.0, title: "r＝5", sub: "切 CD/過 B" },
+            { id: 5, r: 6.0, title: "r＝6", sub: "退回 2 點" }
+          ];
+
+          let html = "";
+          for (let s of stepList) {
+            const isOn = Math.abs(currentR - s.r) < 0.04;
+            html += `
+              <button class="${isOn ? "on" : ""}" data-r="${s.r}" data-step="${s.id}">
+                <span class="formula">${tex(s.title)}</span>
+                <small>${s.sub}</small>
+              </button>
+            `;
+          }
+          stepsDiv.innerHTML = html;
+
+          stepsDiv.querySelectorAll("button").forEach(b => {
+            b.addEventListener("click", () => {
+              activeStep = parseInt(b.dataset.step, 10);
+              setRadius(parseFloat(b.dataset.r));
+            });
+          });
+        }
+
+        // Update Explanation
+        function updateExplain(calc) {
+          const W = config.width;
+          const H = config.height;
+          const px = config.px;
+          const py = config.py;
+          const r = currentR;
+          const keys = getKeys();
+
+          // Check if at key value
+          let atKey = null;
+          for (let k of keys) {
+            if (Math.abs(r - k.r) < 0.03) {
+              atKey = k;
+              break;
+            }
+          }
+
+          if (atKey) {
+            keyBadge.hidden = false;
+            keyBadge.innerHTML = `★ 關鍵值 <span class="formula">${tex(`r＝${atKey.texR}`)}</span>：${atKey.desc}`;
+          } else {
+            keyBadge.hidden = true;
+          }
+
+          // Build explanation content
+          let title = `當半徑 r ＝ ${fmt(r)}`;
+          if (atKey) {
+            title += `（${atKey.label}）`;
+          }
+
+          let p1 = `圓心 <span class="formula">${tex("P(3, 2)")}</span> 到四邊距離分別為：` +
+            `到 <span class="formula">${tex("\overline{AD}")}</span> 距 <span class="formula">${py}</span>、` +
+            `到 <span class="formula">${tex("\overline{AB}")}</span> 距 <span class="formula">${px}</span>、` +
+            `到 <span class="formula">${tex("\overline{BC}")}</span> 距 <span class="formula">${H - py}</span>、` +
+            `到 <span class="formula">${tex("\overline{CD}")}</span> 距 <span class="formula">${W - px}</span>。`;
+
+          let mlistHtml = `
+            <div class="mlist">
+              <span>邊 <span class="formula">${tex("\overline{AD}")}</span>：<b>${calc.edgeCounts.AD}</b> 個交點</span>
+              <span>邊 <span class="formula">${tex("\overline{AB}")}</span>：<b>${calc.edgeCounts.AB}</b> 個交點</span>
+              <span>邊 <span class="formula">${tex("\overline{BC}")}</span>：<b>${calc.edgeCounts.BC}</b> 個交點</span>
+              <span>邊 <span class="formula">${tex("\overline{CD}")}</span>：<b>${calc.edgeCounts.CD}</b> 個交點</span>
+            </div>
+          `;
+
+          let detailText = "";
+          if (r < 2 - 1e-4) {
+            detailText = "因為半徑小於圓心到四邊的最小距離 2，圓完全在長方形內部，與四邊沒有任何交點。";
+          } else if (Math.abs(r - 2) < 0.03) {
+            detailText = "半徑恰等於 P 到邊 AD 的距離 2，圓與邊 AD 相切於 (3, 0)；此時圓與其餘三邊均無交點。";
+          } else if (Math.abs(r - 3) < 0.03) {
+            detailText = "半徑大於 2，與邊 AD 交於兩點；半徑恰等於 P 到邊 AB 的距離 3，與邊 AB 相切於 (0, 2)。交點數為 2 + 1 ＝ 3 個。";
+          } else if (Math.abs(r - 4) < 0.03) {
+            detailText = "半徑 r ＝ 4 大於 PA ＝ \sqrt{13} \approx 3.61，圓弧已越過頂點 A，因此邊 AD 與邊 AB 各只剩下 1 個交點；而 r 恰等於 P 到邊 BC 的距離 4，與邊 BC 相切於 (3, 6)。總交點數為 1 + 1 + 1 ＝ 3 個。";
+          } else if (Math.abs(r - 5) < 0.03) {
+            detailText = "半徑 r ＝ 5 恰等於 P 到邊 CD 距離，與邊 CD 相切於 (8, 2)；同時 PB ＝ \sqrt{3^2 + 4^2} ＝ 5，圓恰好通過頂點 B！頂點 B 同時屬於邊 AB 與邊 BC，但只算作 1 個交點；邊 BC 內部另有 1 交點，邊 AD 上有 1 交點。總交點數為 1 + 1 + 1 + 1 ＝ 4 個。";
+          } else if (Math.abs(r - 6) < 0.03) {
+            detailText = "半徑 r ＝ 6 已超過頂點 A(3.61)、B(5) 與 D(\sqrt{29} \approx 5.39)，圓弧完全移出邊 AD 與邊 AB；僅與邊 BC、邊 CD 各交 1 點。總交點數為 2 個。";
+          } else {
+            detailText = `當前半徑下，圓與各邊線段之交點如圖所示，總計相交於 <span class="result">${calc.total} 個</span> 點。`;
+          }
+
+          explainDiv.innerHTML = `
+            <h3>${title}</h3>
+            <p>${p1}</p>
+            ${mlistHtml}
+            <p>${detailText}</p>
+            <p style="margin-top:6px">➤ <span class="result">總交點數：${calc.total} 個</span></p>
+          `;
+        }
+
+        // Render Edge cards
+        function renderEdgeCards(calc) {
+          const edges = [
+            { id: "AD", name: "\overline{AD}", count: calc.edgeCounts.AD },
+            { id: "AB", name: "\overline{AB}", count: calc.edgeCounts.AB },
+            { id: "BC", name: "\overline{BC}", count: calc.edgeCounts.BC },
+            { id: "CD", name: "\overline{CD}", count: calc.edgeCounts.CD }
+          ];
+
+          let html = "";
+          for (let e of edges) {
+            const isCur = e.count > 0;
+            html += `
+              <div class="edge ${isCur ? "cur" : ""}">
+                <span>邊 <span class="formula">${tex(e.name)}</span></span>
+                <b>${e.count}</b>
+              </div>
+            `;
+          }
+          edgeCounts.innerHTML = html;
+        }
+
+        // Render SVG Diagram & Overlay
+        function renderDiagram(calc) {
+          const W = config.width;
+          const H = config.height;
+          const px = config.px;
+          const py = config.py;
+          const r = currentR;
+
+          // Determine bounding box in mathematical space
+          // A is (0, 0) top-left, D is (W, 0) top-right, B is (0, H) bottom-left, C is (W, H) bottom-right
+          let minX, maxX, minY, maxY;
+          if (zoomMode === "in") {
+            const margin = Math.max(W, H) * 0.18;
+            minX = -margin;
+            maxX = W + margin;
+            minY = -margin;
+            maxY = H + margin;
+          } else {
+            // Full circle view
+            const margin = 1.2;
+            minX = Math.min(-0.8, px - r - margin);
+            maxX = Math.max(W + 0.8, px + r + margin);
+            minY = Math.min(-0.8, py - r - margin);
+            maxY = Math.max(H + 0.8, py + r + margin);
+          }
+
+          const viewW = maxX - minX;
+          const viewH = maxY - minY;
+
+          // Set SVG attributes
+          diagram.setAttribute("viewBox", `${minX} ${minY} ${viewW} ${viewH}`);
+
+          // Build SVG elements
+          let svgContent = `
+            <defs>
+              <pattern id="grid" width="1" height="1" patternUnits="userSpaceOnUse">
+                <path d="M 1 0 L 0 0 0 1" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.04"/>
+              </pattern>
+              <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="0.18" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            <!-- Background subtle grid -->
+            <rect x="${minX}" y="${minY}" width="${viewW}" height="${viewH}" fill="url(#grid)" />
+
+            <!-- Rectangle ABCD -->
+            <rect x="0" y="0" width="${W}" height="${H}"
+                  fill="rgba(79, 216, 240, 0.07)"
+                  stroke="#4fd8f0"
+                  stroke-width="0.12"
+                  rx="0.08" />
+
+            <!-- Center P perpendicular dashed projection lines to 4 sides -->
+            <line x1="${px}" y1="${py}" x2="${px}" y2="0" stroke="rgba(79,216,240,0.45)" stroke-width="0.06" stroke-dasharray="0.15,0.12" />
+            <line x1="${px}" y1="${py}" x2="0" y2="${py}" stroke="rgba(79,216,240,0.45)" stroke-width="0.06" stroke-dasharray="0.15,0.12" />
+            <line x1="${px}" y1="${py}" x2="${px}" y2="${H}" stroke="rgba(79,216,240,0.45)" stroke-width="0.06" stroke-dasharray="0.15,0.12" />
+            <line x1="${px}" y1="${py}" x2="${W}" y2="${py}" stroke="rgba(79,216,240,0.45)" stroke-width="0.06" stroke-dasharray="0.15,0.12" />
+
+            <!-- Circle centered at P -->
+            <circle cx="${px}" cy="${py}" r="${r}"
+                    fill="rgba(255, 200, 87, 0.08)"
+                    stroke="#ffc857"
+                    stroke-width="0.12" />
+
+            <!-- Center P dot -->
+            <circle cx="${px}" cy="${py}" r="0.16" fill="#6ff0b4" />
+            <circle cx="${px}" cy="${py}" r="0.32" fill="rgba(111,240,180,0.25)" />
+
+            <!-- Intersection points -->
+          `;
+
+          // Draw intersection points
+          for (let pt of calc.allPoints) {
+            svgContent += `
+              <g class="inter-pt" filter="url(#glow)">
+                <circle cx="${pt.x}" cy="${pt.y}" r="0.38" fill="rgba(255, 77, 109, 0.35)" />
+                <circle cx="${pt.x}" cy="${pt.y}" r="0.22" fill="#ff4d6d" stroke="#ffffff" stroke-width="0.05" />
+              </g>
+            `;
+          }
+
+          diagram.innerHTML = svgContent;
+
+          // Overlay floating labels
+          // Map math coordinates to board client percentage
+          function toPct(x, y) {
+            const pxPct = ((x - minX) / viewW) * 100;
+            const pyPct = ((y - minY) / viewH) * 100;
+            return { x: pxPct, y: pyPct };
+          }
+
+          const ptA = toPct(0, 0);
+          const ptD = toPct(W, 0);
+          const ptB = toPct(0, H);
+          const ptC = toPct(W, H);
+          const ptP = toPct(px, py);
+
+          let oHtml = `
+            <div class="olabel" style="left:${ptA.x}%;top:${ptA.y}%;transform:translate(-115%,-115%)">A (0,0)</div>
+            <div class="olabel" style="left:${ptD.x}%;top:${ptD.y}%;transform:translate(15%,-115%)">D (${W},0)</div>
+            <div class="olabel" style="left:${ptB.x}%;top:${ptB.y}%;transform:translate(-115%,15%)">B (0,${H})</div>
+            <div class="olabel" style="left:${ptC.x}%;top:${ptC.y}%;transform:translate(15%,15%)">C (${W},${H})</div>
+            <div class="olabel" style="left:${ptP.x}%;top:${ptP.y}%;transform:translate(18%,-125%);background:rgba(111,240,180,0.22);border-color:#6ff0b4;color:#6ff0b4;font-weight:700">P (${px},${py})</div>
+          `;
+
+          // Distance tags
+          const ptAD_mid = toPct(px, py / 2);
+          const ptAB_mid = toPct(px / 2, py);
+          const ptBC_mid = toPct(px, py + (H - py) / 2);
+          const ptCD_mid = toPct(px + (W - px) / 2, py);
+
+          oHtml += `
+            <div class="olabel" style="left:${ptAD_mid.x}%;top:${ptAD_mid.y}%;transform:translate(18%,-50%);font-size:11px;padding:0 5px;opacity:0.85">距 2</div>
+            <div class="olabel" style="left:${ptAB_mid.x}%;top:${ptAB_mid.y}%;transform:translate(-50%,-120%);font-size:11px;padding:0 5px;opacity:0.85">距 3</div>
+            <div class="olabel" style="left:${ptBC_mid.x}%;top:${ptBC_mid.y}%;transform:translate(18%,-50%);font-size:11px;padding:0 5px;opacity:0.85">距 4</div>
+            <div class="olabel" style="left:${ptCD_mid.x}%;top:${ptCD_mid.y}%;transform:translate(-50%,-120%);font-size:11px;padding:0 5px;opacity:0.85">距 5</div>
+          `;
+
+          // Intersection coordinate chips
+          for (let pt of calc.allPoints) {
+            const pPct = toPct(pt.x, pt.y);
+            const isCorner = (pt.x === 0 || pt.x === W) && (pt.y === 0 || pt.y === H);
+            if (!isCorner) {
+              oHtml += `
+                <div class="olabel hot" style="left:${pPct.x}%;top:${pPct.y}%;transform:translate(-50%,-135%);font-size:12px">
+                  (${fmt(pt.x)}, ${fmt(pt.y)})
+                </div>
+              `;
+            }
+          }
+
+          olay.innerHTML = oHtml;
+        }
+
+        // Full update
+        function updateAll() {
+          const calc = calculateIntersections(currentR);
+
+          // Update total count
+          totalEl.textContent = calc.total;
+
+          // Update slider & input
+          radiusInput.value = fmt(currentR);
+          slider.value = currentR;
+          const min = parseFloat(slider.min) || 0.01;
+          const max = parseFloat(slider.max) || 8.5;
+          const pct = Math.max(0, Math.min(100, ((currentR - min) / (max - min)) * 100));
+          slider.style.setProperty("--p", `${pct}%`);
+
+          // Highlight presets
+          presets.forEach(btn => {
+            const pr = parseFloat(btn.dataset.r);
+            if (Math.abs(currentR - pr) < 0.03) {
+              btn.classList.add("on");
+            } else {
+              btn.classList.remove("on");
+            }
+          });
+
+          // Render components
+          renderEdgeCards(calc);
+          renderDiagram(calc);
+          updateExplain(calc);
+          renderAnswerTable();
+          renderIntervals();
+          renderKeysAndTicks();
+          renderSteps();
+        }
+
+        // Set Radius with snap support
+        function setRadius(newR, snap = false) {
+          const keys = getKeys();
+          let r = Math.max(0.01, Math.min(15, newR));
+
+          if (snap) {
+            for (let k of keys) {
+              if (Math.abs(r - k.r) < 0.08) {
+                r = k.r;
+                break;
+              }
+            }
+          }
+
+          currentR = Math.round(r * 100) / 100;
+          updateAll();
+        }
+
+        // Tab Switching
+        originalTab.addEventListener("click", () => {
+          originalTab.setAttribute("aria-selected", "true");
+          customTab.setAttribute("aria-selected", "false");
+          settingsSec.hidden = true;
+          config = { ...ORIG_CONFIG };
+          widthInput.value = config.width;
+          heightInput.value = config.height;
+          pxInput.value = config.px;
+          pyInput.value = config.py;
+          slider.max = "8.5";
+          renderProblem();
+          setRadius(2.0);
+        });
+
+        customTab.addEventListener("click", () => {
+          customTab.setAttribute("aria-selected", "true");
+          originalTab.setAttribute("aria-selected", "false");
+          settingsSec.hidden = false;
+        });
+
+        // Apply Custom Parameters
+        applyBtn.addEventListener("click", () => {
+          const w = parseFloat(widthInput.value);
+          const h = parseFloat(heightInput.value);
+          const px = parseFloat(pxInput.value);
+          const py = parseFloat(pyInput.value);
+
+          if (isNaN(w) || isNaN(h) || isNaN(px) || isNaN(py) || w <= 0 || h <= 0) {
+            settingMessage.textContent = "請輸入大於 0 的正數！";
+            settingMessage.style.color = "#ff4d6d";
+            return;
+          }
+
+          if (px <= 0 || px >= w || py <= 0 || py >= h) {
+            settingMessage.textContent = `P 點必須在長方形內部！請確保 0 < px < ${w} 且 0 < py < ${h}。`;
+            settingMessage.style.color = "#ff4d6d";
+            return;
+          }
+
+          config = { width: w, height: h, px: px, py: py };
+          const maxV = Math.max(
+            Math.hypot(px, py),
+            Math.hypot(px, h - py),
+            Math.hypot(w - px, py),
+            Math.hypot(w - px, h - py)
+          );
+          slider.max = (Math.ceil(maxV) + 1.5).toString();
+
+          settingMessage.textContent = "自訂題目已套用！";
+          settingMessage.style.color = "var(--mint)";
+          renderProblem();
+          setRadius(Math.min(px, py));
+        });
+
+        // Reset Custom
+        resetCustomBtn.addEventListener("click", () => {
+          config = { ...ORIG_CONFIG };
+          widthInput.value = config.width;
+          heightInput.value = config.height;
+          pxInput.value = config.px;
+          pyInput.value = config.py;
+          slider.max = "8.5";
+          settingMessage.textContent = "P 須在長方形內；修改不影響原題。";
+          settingMessage.style.color = "var(--muted)";
+          renderProblem();
+          setRadius(2.0);
+        });
+
+        // Slider events
+        slider.addEventListener("input", e => {
+          setRadius(parseFloat(e.target.value), true);
+        });
+
+        radiusInput.addEventListener("change", e => {
+          const val = parseFloat(e.target.value);
+          if (!isNaN(val) && val > 0) {
+            setRadius(val);
+          }
+        });
+
+        // Presets
+        presets.forEach(btn => {
+          btn.addEventListener("click", () => {
+            setRadius(parseFloat(btn.dataset.r));
+          });
+        });
+
+        // Prev / Next Key values
+        prevKeyBtn.addEventListener("click", () => {
+          const keys = getKeys();
+          for (let i = keys.length - 1; i >= 0; i--) {
+            if (keys[i].r < currentR - 0.03) {
+              setRadius(keys[i].r);
+              return;
+            }
+          }
+          setRadius(keys[0].r);
+        });
+
+        nextKeyBtn.addEventListener("click", () => {
+          const keys = getKeys();
+          for (let i = 0; i < keys.length; i++) {
+            if (keys[i].r > currentR + 0.03) {
+              setRadius(keys[i].r);
+              return;
+            }
+          }
+          setRadius(keys[keys.length - 1].r);
+        });
+
+        // Zoom toggle
+        zoomInBtn.addEventListener("click", () => {
+          zoomMode = "in";
+          zoomInBtn.classList.add("on");
+          zoomInBtn.setAttribute("aria-pressed", "true");
+          zoomOutBtn.classList.remove("on");
+          zoomOutBtn.setAttribute("aria-pressed", "false");
+          updateAll();
+        });
+
+        zoomOutBtn.addEventListener("click", () => {
+          zoomMode = "out";
+          zoomOutBtn.classList.add("on");
+          zoomOutBtn.setAttribute("aria-pressed", "true");
+          zoomInBtn.classList.remove("on");
+          zoomInBtn.setAttribute("aria-pressed", "false");
+          updateAll();
+        });
+
+        // Fullscreen
+        fullscreenBtn.addEventListener("click", () => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+            fullscreenBtn.textContent = "⛶ 退出全螢幕";
+          } else {
+            document.exitFullscreen().catch(() => {});
+            fullscreenBtn.textContent = "⛶ 全螢幕";
+          }
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+          if (!document.fullscreenElement) {
+            fullscreenBtn.textContent = "⛶ 全螢幕";
+          } else {
+            fullscreenBtn.textContent = "⛶ 退出全螢幕";
+          }
+          renderDiagram(calculateIntersections(currentR));
+        });
+
+        // Steps navigation
+        const stepRadii = [2.0, 3.0, 4.0, 5.0, 6.0];
+
+        prevBtn.addEventListener("click", () => {
+          let idx = 0;
+          for (let i = stepRadii.length - 1; i >= 0; i--) {
+            if (stepRadii[i] < currentR - 0.05) {
+              idx = i;
+              break;
+            }
+          }
+          setRadius(stepRadii[idx]);
+        });
+
+        nextBtn.addEventListener("click", () => {
+          let idx = stepRadii.length - 1;
+          for (let i = 0; i < stepRadii.length; i++) {
+            if (stepRadii[i] > currentR + 0.05) {
+              idx = i;
+              break;
+            }
+          }
+          setRadius(stepRadii[idx]);
+        });
+
+        // Auto play
+        playBtn.addEventListener("click", () => {
+          if (isPlaying) {
+            clearInterval(playTimer);
+            isPlaying = false;
+            playBtn.classList.remove("on");
+            playBtn.classList.add("primary");
+            playBtn.textContent = "▶ 自動播放";
+          } else {
+            isPlaying = true;
+            playBtn.classList.remove("primary");
+            playBtn.classList.add("on");
+            playBtn.textContent = "⏸ 暫停播放";
+
+            playTimer = setInterval(() => {
+              let curIdx = stepRadii.findIndex(r => Math.abs(r - currentR) < 0.05);
+              let nextIdx = (curIdx + 1) % stepRadii.length;
+              setRadius(stepRadii[nextIdx]);
+            }, 2400);
+          }
+        });
+
+        // Responsive resize
+        window.addEventListener("resize", () => {
+          renderDiagram(calculateIntersections(currentR));
+        });
+
+        // Initial setup
+        function init() {
+          slider.min = "0.01";
+          slider.max = "8.5";
+          slider.step = "0.01";
+          renderProblem();
+          setRadius(2.0);
+        }
+
+        // Wait for KaTeX or run immediately
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", init);
+        } else {
+          init();
+        }
+
+        // Re-render once KaTeX finishes loading
+        window.addEventListener("load", () => {
+          renderProblem();
+          updateAll();
+        });
+      })();
+    </script>
+  </body>
+</html>
